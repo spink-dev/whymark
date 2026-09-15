@@ -3,7 +3,6 @@ import {
   CREV_VERSION,
   NOTE_KINDS,
   VERIFY_METHODS,
-  type Check,
   type CrevDocument,
   type Diagnostic,
   type DiffLine,
@@ -477,7 +476,9 @@ function parseFileDirective(
     });
   }
 
-  if (!sawStatus && section.oldPath) section.status = "renamed";
+  if (!sawStatus && section.oldPath && section.oldPath !== section.path) {
+    section.status = "renamed";
+  }
   return section;
 }
 

@@ -211,9 +211,7 @@ function buildDoc(args: Args) {
 
 function cmdNew(args: Args) {
   const { doc, diff, cwd } = buildDoc(args);
-  if (!diff.files.length) {
-    fail(`No changes found for scope \`${doc.meta.scope}\`. Try --staged or --branch.`);
-  }
+  if (!diff.files.length) noChanges(doc.meta.scope);
 
   const text = serializeCrev(doc);
   const out = str(args.flags.get("out")) ?? str(args.flags.get("o"));
@@ -248,15 +246,24 @@ function cmdNew(args: Args) {
   );
 }
 
+function noChanges(scope: Scope | undefined): never {
+  const others = ["--staged", "--unstaged", "--branch main", "--commit HEAD"].filter(
+    (flag) => !flag.includes(String(scope)),
+  );
+  fail(
+    `No changes in scope \`${scope}\`${
+      "" // keep the hint on one line
+    }. Nothing to review — try ${others.slice(0, 3).join(", ")}, or pass --path.`,
+  );
+}
+
 function cmdPrompt(args: Args) {
   const { doc, diff, cwd } = buildDoc(args);
-  if (!diff.files.length) {
-    fail(`No changes found for scope \`${doc.meta.scope}\`. Try --staged or --branch.`);
-  }
+  if (!diff.files.length) noChanges(doc.meta.scope);
   const skeleton = serializeCrev(doc);
   const templatePath = join(cwd, "prompts", "crev-author.md");
   const template = existsSync(templatePath)
-    ? readFileSync(templatePath, "utf8")
+    ? stripPreamble(readFileSync(templatePath, "utf8"))
     : FALLBACK_PROMPT;
   process.stdout.write(
     template.replace("{{SKELETON}}", skeleton.trimEnd()).replace(
@@ -264,6 +271,14 @@ function cmdPrompt(args: Args) {
       existsSync(join(cwd, "spec/crev-v1.md")) ? "spec/crev-v1.md" : "the CREV v1 spec",
     ),
   );
+}
+
+/** The template file explains itself to a human above the first `---`; the
+ *  agent only needs what comes after it. */
+function stripPreamble(template: string): string {
+  const lines = template.split("\n");
+  const separator = lines.findIndex((line) => line.trim() === "---");
+  return separator === -1 ? template : lines.slice(separator + 1).join("\n").trimStart();
 }
 
 const FALLBACK_PROMPT = `Fill in this CREV review of your own changes. Replace every TODO.

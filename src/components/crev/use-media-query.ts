@@ -1,17 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
+/**
+ * `fallback` is what the server renders, so pick the value that gives the
+ * layout the review page should have before hydration.
+ */
 export function useMediaQuery(query: string, fallback = false): boolean {
-  const [matches, setMatches] = useState(fallback);
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      const list = window.matchMedia(query);
+      list.addEventListener("change", onChange);
+      return () => list.removeEventListener("change", onChange);
+    },
+    [query],
+  );
 
-  useEffect(() => {
-    const list = window.matchMedia(query);
-    setMatches(list.matches);
-    const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
-    list.addEventListener("change", handler);
-    return () => list.removeEventListener("change", handler);
-  }, [query]);
+  const getSnapshot = useCallback(() => window.matchMedia(query).matches, [query]);
 
-  return matches;
+  return useSyncExternalStore(subscribe, getSnapshot, () => fallback);
 }

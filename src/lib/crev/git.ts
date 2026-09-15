@@ -2,7 +2,6 @@ import { execFileSync, spawnSync } from "node:child_process";
 import {
   type CrevDocument,
   type FileSection,
-  type FileStatus,
   type Hunk,
   type Note,
   type Scope,
@@ -155,7 +154,9 @@ export function collectDiff(request: DiffRequest): DiffResult {
   const raw = git(args, { cwd });
   const files = parseUnifiedDiff(raw);
 
-  if (request.untracked && request.scope !== "commit" && request.scope !== "branch") {
+  // Untracked files live in the working tree only, so they belong to the
+  // working-tree scopes and would be a lie in a `--staged` or `--branch` review.
+  if (request.untracked && (request.scope === "unstaged" || request.scope === "worktree")) {
     files.push(...collectUntracked(context, cwd, request.paths));
   }
 
@@ -192,7 +193,7 @@ function collectUntracked(
     section.path = path;
     section.oldPath = undefined;
     section.status = "added";
-    section.newSha = hashObject(path, cwd) ?? undefined;
+    section.newSha = hashObject(path, cwd, 7) ?? undefined;
     out.push(section);
   }
   return out;
@@ -480,7 +481,9 @@ function titleFor(scope: Scope, diff: DiffResult): string {
 }
 
 /** Current blob hash of a working-tree file, for staleness detection. */
-export function hashObject(path: string, cwd?: string): string | null {
+export function hashObject(path: string, cwd?: string, abbrev = 0): string | null {
   const out = tryGit(["hash-object", "--", path], { cwd });
-  return out ? out.trim() : null;
+  if (!out) return null;
+  const sha = out.trim();
+  return abbrev ? sha.slice(0, abbrev) : sha;
 }

@@ -85,7 +85,9 @@ export function serializeFileHeader(file: FileSection): string {
   const parts = ["@file", quoteIfNeeded(file.path), file.status];
   if (file.added) parts.push(`+${file.added}`);
   if (file.removed) parts.push(`-${file.removed}`);
-  if (file.oldPath) parts.push(`from=${quoteIfNeeded(file.oldPath)}`);
+  if (file.oldPath && file.oldPath !== file.path) {
+    parts.push(`from=${quoteIfNeeded(file.oldPath)}`);
+  }
   if (file.oldSha) parts.push(`oldsha=${file.oldSha}`);
   if (file.newSha) parts.push(`newsha=${file.newSha}`);
   if (file.lang) parts.push(`lang=${file.lang}`);
