@@ -10,16 +10,23 @@
 export interface RetryOptions {
   attempts?: number;
   delayMs?: number;
+  /** Cap on any single wait, so a long backoff cannot stall a request forever. */
+  maxDelayMs?: number;
 }
 
-/** Retryable, in this codebase, means the call is safe to send again. */
 export function isRetryable(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   const status = (error as { status?: number }).status;
-  return status === 429 || status === 503;
+  return status === 429 || status === 503 || status === 502 || status === 504;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Full jitter: every client picks its own wait inside the window. */
+function backoff(attempt: number, base: number, cap: number): number {
+  const window = Math.min(cap, base * 2 ** (attempt - 1));
+  return Math.random() * window;
+}
 
 export async function withRetry<T>(
   operation: () => Promise<T>,
@@ -27,6 +34,7 @@ export async function withRetry<T>(
 ): Promise<T> {
   const attempts = options.attempts ?? 3;
   const delayMs = options.delayMs ?? 200;
+  const maxDelayMs = options.maxDelayMs ?? 5_000;
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -35,7 +43,9 @@ export async function withRetry<T>(
     } catch (error) {
       lastError = error;
       if (!isRetryable(error) || attempt === attempts) break;
-      await sleep(delayMs);
+      const wait = backoff(attempt, delayMs, maxDelayMs);
+      console.log(`[retry] attempt ${attempt} failed, waiting ${wait}ms`);
+      await sleep(wait);
     }
   }
 
