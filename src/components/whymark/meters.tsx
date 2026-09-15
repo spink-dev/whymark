@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 
 function tone(value: number): string {
-  if (value >= 0.8) return "var(--crev-pass)";
-  if (value >= 0.5) return "var(--crev-unknown)";
-  return "var(--crev-fail)";
+  if (value >= 0.8) return "var(--whymark-pass)";
+  if (value >= 0.5) return "var(--whymark-unknown)";
+  return "var(--whymark-fail)";
 }
 
 export function CoverageBar({

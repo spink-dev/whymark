@@ -54,7 +54,7 @@ const BY_EXTENSION: Record<string, string> = {
   scala: "scala",
   dart: "dart",
   zig: "zig",
-  crev: "yaml",
+  whymark: "yaml",
 };
 
 const BY_FILENAME: Record<string, string> = {

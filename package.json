@@ -1,12 +1,12 @@
 {
-  "name": "crev",
+  "name": "whymark",
   "version": "0.1.0",
   "private": true,
-  "description": "CREV — a file format and reviewer for reading AI-written code changes with the reasoning, sources, and verification attached to each line.",
+  "description": "whymark — a file format and reviewer for reading AI-written code changes with the reasoning, sources, and verification attached to each line.",
   "author": "Samuel Spink",
   "license": "MIT",
   "bin": {
-    "crev": "./bin/crev.mjs"
+    "whymark": "./bin/whymark.mjs"
   },
   "scripts": {
     "dev": "next dev --port 43917",
@@ -17,7 +17,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "node tests/e2e/viewer.mjs",
-    "crev": "tsx src/cli/crev.ts"
+    "whymark": "tsx src/cli/whymark.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

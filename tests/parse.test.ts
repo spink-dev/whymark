@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseCrev, parseSelector, parseSourceRef, parseVerifyClaim } from "../src/lib/crev/parse";
-import { serializeCrev } from "../src/lib/crev/serialize";
+import { parseWhymark, parseSelector, parseSourceRef, parseVerifyClaim } from "../src/lib/whymark/parse";
+import { serializeWhymark } from "../src/lib/whymark/serialize";
 
 const DOC = `---
-crev: 1
+whymark: 1
 title: Cache the user lookup
 author: claude-opus-5 (cursor)
 scope: staged
@@ -46,11 +46,11 @@ why: A null user is cached and returned as a hit.
 todo: confirm mid-request grants are impossible
 `;
 
-describe("parseCrev", () => {
-  const doc = parseCrev(DOC);
+describe("parseWhymark", () => {
+  const doc = parseWhymark(DOC);
 
   it("reads frontmatter including block summary and checks", () => {
-    expect(doc.meta.crev).toBe(1);
+    expect(doc.meta.whymark).toBe(1);
     expect(doc.meta.title).toBe("Cache the user lookup");
     expect(doc.meta.author).toBe("claude-opus-5 (cursor)");
     expect(doc.meta.scope).toBe("staged");
@@ -116,10 +116,10 @@ describe("parseCrev", () => {
   });
 
   it("round-trips through the serializer", () => {
-    const once = serializeCrev(doc);
-    const twice = serializeCrev(parseCrev(once));
+    const once = serializeWhymark(doc);
+    const twice = serializeWhymark(parseWhymark(once));
     expect(twice).toBe(once);
-    const reparsed = parseCrev(once);
+    const reparsed = parseWhymark(once);
     expect(reparsed.files[0].hunks[0].lines).toEqual(doc.files[0].hunks[0].lines);
     expect(reparsed.files[0].notes[0].why).toBe(doc.files[0].notes[0].why);
   });
@@ -138,8 +138,8 @@ describe("selectors", () => {
   });
 
   it("flags a selector that names lines absent from the diff", () => {
-    const doc = parseCrev(`---
-crev: 1
+    const doc = parseWhymark(`---
+whymark: 1
 title: t
 ---
 
@@ -209,8 +209,8 @@ describe("verify claims", () => {
 
 describe("lenient parsing", () => {
   it("treats a blank line inside a hunk as context and trims the trailing one", () => {
-    const doc = parseCrev(`---
-crev: 1
+    const doc = parseWhymark(`---
+whymark: 1
 title: t
 ---
 
@@ -230,13 +230,13 @@ why: because
     expect(doc.files[0].notes[0].why).toBe("because");
   });
 
-  it("does not misread a diff of a crev file as directives", () => {
-    const doc = parseCrev(`---
-crev: 1
+  it("does not misread a diff of a whymark file as directives", () => {
+    const doc = parseWhymark(`---
+whymark: 1
 title: t
 ---
 
-@file reviews/x.crev modified
+@file reviews/x.whymark modified
 @@ -1,3 +1,4 @@
  @file src/a.ts modified
 -@note +1 kind=note
@@ -252,8 +252,8 @@ why: annotating an annotation
   });
 
   it("accepts a field written without a space after the colon", () => {
-    const doc = parseCrev(`---
-crev: 1
+    const doc = parseWhymark(`---
+whymark: 1
 title: t
 ---
 
@@ -271,8 +271,8 @@ verify:cmd \`npm test\` => pass
   });
 
   it("does not read a bare URL in a body as a field", () => {
-    const doc = parseCrev(`---
-crev: 1
+    const doc = parseWhymark(`---
+whymark: 1
 title: t
 ---
 
@@ -293,8 +293,8 @@ https://example.com/docs explains the rest.
   it("keeps code spans intact when wrapping long values", () => {
     const long =
       "This explanation is quite long so that the serializer has to wrap it across several lines, and it mentions `npm run test:e2e -- --grep limiter` which must stay on one line.";
-    const doc = parseCrev(`---
-crev: 1
+    const doc = parseWhymark(`---
+whymark: 1
 title: t
 ---
 
@@ -305,19 +305,19 @@ title: t
 @note +1 kind=intent
 why: ${long}
 `);
-    const text = serializeCrev(doc);
+    const text = serializeWhymark(doc);
     expect(text).toContain("`npm run test:e2e -- --grep limiter`");
     for (const line of text.split("\n")) {
       if (line.startsWith("why:") || line.startsWith("  ")) {
         expect(line.length).toBeLessThanOrEqual(90);
       }
     }
-    expect(parseCrev(text).files[0].notes[0].why).toBe(long);
-    expect(serializeCrev(parseCrev(text))).toBe(text);
+    expect(parseWhymark(text).files[0].notes[0].why).toBe(long);
+    expect(serializeWhymark(parseWhymark(text))).toBe(text);
   });
 
   it("recovers from a missing frontmatter with an error, not a throw", () => {
-    const doc = parseCrev("@file a.ts modified\n@@ -1 +1 @@\n+x\n");
+    const doc = parseWhymark("@file a.ts modified\n@@ -1 +1 @@\n+x\n");
     expect(doc.diagnostics.some((d) => d.code === "frontmatter-missing")).toBe(true);
     expect(doc.files).toHaveLength(1);
   });

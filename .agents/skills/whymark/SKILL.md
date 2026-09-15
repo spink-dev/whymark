@@ -1,11 +1,11 @@
 ---
-name: crev
-description: Write a CREV (.crev) review of code changes — a diff with line-addressed annotations giving why each change was made, what evidence backs it, and how it was verified. Use when asked to explain, document, justify, or hand off your own changes for review, or when asked for a code review, change walkthrough, or "what did you do and why".
+name: whymark
+description: Write a whymark (.whymark) review of code changes — a diff with line-addressed annotations giving why each change was made, what evidence backs it, and how it was verified. Use when asked to explain, document, justify, or hand off your own changes for review, or when asked for a code review, change walkthrough, or "what did you do and why".
 ---
 
-# Writing a CREV review
+# Writing a whymark review
 
-A `.crev` file is a diff with annotations addressed to individual lines. It
+A `.whymark` file is a diff with annotations addressed to individual lines. It
 answers the three questions a reviewer actually has about code an agent wrote:
 
 1. **Why is it like this?** — not what it does; the code already says that.
@@ -13,7 +13,7 @@ answers the three questions a reviewer actually has about code an agent wrote:
    or nothing at all (say so).
 3. **What checked it?** — the exact command you ran and what it printed.
 
-The format is specified in `spec/crev-v1.md`. Read it if you need the full
+The format is specified in `spec/whymark-v1.md`. Read it if you need the full
 grammar; the rules below are enough for normal use.
 
 ## Workflow
@@ -24,14 +24,14 @@ wrong about them.
 
 ```bash
 # pick the scope that matches what you are reviewing
-npm run crev -- new --staged    --author "<your model name>"   # git diff --cached
-npm run crev -- new --unstaged  --author "<your model name>"   # git diff
-npm run crev -- new --worktree  --author "<your model name>"   # git diff HEAD (+ untracked)
-npm run crev -- new --branch main --author "<your model name>" # whole branch
-npm run crev -- new --commit HEAD --author "<your model name>" # one commit
+npm run whymark -- new --staged    --author "<your model name>"   # git diff --cached
+npm run whymark -- new --unstaged  --author "<your model name>"   # git diff
+npm run whymark -- new --worktree  --author "<your model name>"   # git diff HEAD (+ untracked)
+npm run whymark -- new --branch main --author "<your model name>" # whole branch
+npm run whymark -- new --commit HEAD --author "<your model name>" # one commit
 ```
 
-That writes `reviews/<slug>.crev` containing the real diff plus one annotation
+That writes `reviews/<slug>.whymark` containing the real diff plus one annotation
 stub per hunk. Then:
 
 1. Fill in `summary` in the frontmatter. Write it for someone who has not seen
@@ -42,9 +42,9 @@ stub per hunk. Then:
 4. Check your work:
 
 ```bash
-npm run crev -- validate reviews/<slug>.crev   # structure, staleness, coverage
-npm run crev -- verify   reviews/<slug>.crev --write   # re-runs every `verify: cmd`
-npm run crev -- stats    reviews/<slug>.crev
+npm run whymark -- validate reviews/<slug>.whymark   # structure, staleness, coverage
+npm run whymark -- verify   reviews/<slug>.whymark --write   # re-runs every `verify: cmd`
+npm run whymark -- stats    reviews/<slug>.whymark
 ```
 
 `verify --write` re-runs each command you claimed and rewrites the file with the
@@ -66,7 +66,7 @@ verify: …
 **Selectors** use the file's own line numbers as shown in the diff: `+42` for
 new-side line 42, `+42..57` for a range, `-30` for a line you deleted, `file`
 for the whole file, `doc` for the whole change. Never invent a line number —
-`crev validate` fails on a selector that does not appear in the diff.
+`whymark validate` fails on a selector that does not appear in the diff.
 
 Group lines by *reason*, not by hunk. One annotation should cover the lines that
 exist for a single decision, even if that is 15 lines; two decisions in one hunk
@@ -126,7 +126,7 @@ Status: `pass` `fail` `unknown` `skipped`.
 - `verify: manual "429 after the 101st request" => pass`
 - `verify: none => unknown (needs a load test)`
 
-**Only claim `pass` for something you actually ran in this session.** `crev
+**Only claim `pass` for something you actually ran in this session.** `whymark
 verify` re-runs every `cmd` claim, so a false claim is caught mechanically and
 is worse than admitting `none`.
 
@@ -172,9 +172,9 @@ run `validate`.
 
 ## Minimal complete example
 
-```crev
+```whymark
 ---
-crev: 1
+whymark: 1
 title: Reject expired invite tokens
 author: <model> (<harness>)
 date: 2026-09-15T12:04:00Z

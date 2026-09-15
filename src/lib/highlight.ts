@@ -4,8 +4,8 @@ import {
   type Highlighter,
   type ThemedToken,
 } from "shiki";
-import { languageFor } from "@/lib/crev/lang";
-import type { FileSection } from "@/lib/crev/types";
+import { languageFor } from "@/lib/whymark/lang";
+import type { FileSection } from "@/lib/whymark/types";
 
 /** A syntax-highlighted span, trimmed to what the client actually needs. */
 export interface Token {

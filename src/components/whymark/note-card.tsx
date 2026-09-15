@@ -3,7 +3,7 @@
 import { forwardRef } from "react";
 import { CircleHelp, ListTodo, Shuffle, Waypoints } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Note } from "@/lib/crev/types";
+import type { Note } from "@/lib/whymark/types";
 import { KIND_META } from "./meta";
 import { Markdown, inline } from "./markdown";
 import { Confidence, RiskPill, SourceRow, VerifyRow } from "./pills";

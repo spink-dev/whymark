@@ -1,8 +1,8 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
-import { parseCrev } from "@/lib/crev/parse";
-import { computeStats, type DocStats } from "@/lib/crev/stats";
-import type { CrevDocument } from "@/lib/crev/types";
+import { parseWhymark } from "@/lib/whymark/parse";
+import { computeStats, type DocStats } from "@/lib/whymark/stats";
+import type { WhymarkDocument } from "@/lib/whymark/types";
 
 export const REVIEWS_DIR = join(process.cwd(), "reviews");
 
@@ -10,7 +10,7 @@ export interface ReviewEntry {
   slug: string;
   file: string;
   mtime: number;
-  doc: CrevDocument;
+  doc: WhymarkDocument;
   stats: DocStats;
 }
 
@@ -27,10 +27,10 @@ export async function listReviews(): Promise<ReviewEntry[]> {
   }
 
   const entries: ReviewEntry[] = [];
-  for (const name of names.filter((n) => n.endsWith(".crev"))) {
+  for (const name of names.filter((n) => n.endsWith(".whymark"))) {
     const file = join(REVIEWS_DIR, name);
     const [text, info] = await Promise.all([readFile(file, "utf8"), stat(file)]);
-    const doc = parseCrev(text, { filename: name });
+    const doc = parseWhymark(text, { filename: name });
     entries.push({
       slug: slugFor(name),
       file: name,
@@ -49,7 +49,7 @@ export async function listReviews(): Promise<ReviewEntry[]> {
 
 export async function loadReview(slug: string): Promise<ReviewEntry | null> {
   const safe = slug.replace(/[^a-zA-Z0-9._-]/g, "");
-  const file = join(REVIEWS_DIR, `${safe}.crev`);
+  const file = join(REVIEWS_DIR, `${safe}.whymark`);
   let text: string;
   let info: Awaited<ReturnType<typeof stat>>;
   try {
@@ -57,10 +57,10 @@ export async function loadReview(slug: string): Promise<ReviewEntry | null> {
   } catch {
     return null;
   }
-  const doc = parseCrev(text, { filename: `${safe}.crev` });
+  const doc = parseWhymark(text, { filename: `${safe}.whymark` });
   return {
     slug: safe,
-    file: `${safe}.crev`,
+    file: `${safe}.whymark`,
     mtime: info.mtimeMs,
     doc,
     stats: computeStats(doc),
@@ -70,7 +70,7 @@ export async function loadReview(slug: string): Promise<ReviewEntry | null> {
 export async function loadRawReview(slug: string): Promise<string | null> {
   const safe = slug.replace(/[^a-zA-Z0-9._-]/g, "");
   try {
-    return await readFile(join(REVIEWS_DIR, `${safe}.crev`), "utf8");
+    return await readFile(join(REVIEWS_DIR, `${safe}.whymark`), "utf8");
   } catch {
     return null;
   }

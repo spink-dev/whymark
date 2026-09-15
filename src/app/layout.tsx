@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "crev — read AI-written code with the reasoning attached",
+  title: "whymark — read AI-written code with the reasoning attached",
   description:
-    "CREV is a review format that puts a unified diff on the left and line-addressed annotations on the right: why the change was made, what evidence backs it, and how it was verified.",
+    "whymark is a review format that puts a unified diff on the left and line-addressed annotations on the right: why the change was made, what evidence backs it, and how it was verified.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

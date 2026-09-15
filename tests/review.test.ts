@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { parseCrev } from "../src/lib/crev/parse";
-import { parseUnifiedDiff } from "../src/lib/crev/git";
-import { computeStats } from "../src/lib/crev/stats";
-import { validateDocument } from "../src/lib/crev/validate";
+import { parseWhymark } from "../src/lib/whymark/parse";
+import { parseUnifiedDiff } from "../src/lib/whymark/git";
+import { computeStats } from "../src/lib/whymark/stats";
+import { validateDocument } from "../src/lib/whymark/validate";
 import {
   anchorsFor,
   buildRows,
   buildSplitRows,
   layoutCards,
   layoutRail,
-} from "../src/lib/crev/align";
+} from "../src/lib/whymark/align";
 
 const DOC = `---
-crev: 1
+whymark: 1
 title: Add a rate limiter
 summary: Adds a fixed-window limiter to the public API.
 ---
@@ -37,7 +37,7 @@ verify: none
 `;
 
 describe("stats", () => {
-  const stats = computeStats(parseCrev(DOC));
+  const stats = computeStats(parseWhymark(DOC));
 
   it("measures coverage over added lines only", () => {
     expect(stats.added).toBe(6);
@@ -59,13 +59,13 @@ describe("stats", () => {
 
 describe("validate", () => {
   it("passes a complete review", () => {
-    const result = validateDocument(parseCrev(DOC), { skipStaleness: true });
+    const result = validateDocument(parseWhymark(DOC), { skipStaleness: true });
     expect(result.errors).toBe(0);
     expect(result.ok).toBe(true);
   });
 
   it("fails when coverage is below the threshold", () => {
-    const result = validateDocument(parseCrev(DOC), {
+    const result = validateDocument(parseWhymark(DOC), {
       skipStaleness: true,
       minCoverage: 0.9,
     });
@@ -74,8 +74,8 @@ describe("validate", () => {
   });
 
   it("warns about generated placeholder text left in a note", () => {
-    const doc = parseCrev(`---
-crev: 1
+    const doc = parseWhymark(`---
+whymark: 1
 title: t
 summary: real summary
 ---
@@ -92,8 +92,8 @@ why: TODO: why this code is the way it is. Not what it does.
   });
 
   it("warns when a high-risk note has nothing backing it", () => {
-    const doc = parseCrev(`---
-crev: 1
+    const doc = parseWhymark(`---
+whymark: 1
 title: t
 summary: real summary
 ---
@@ -165,7 +165,7 @@ index 4444444..5555555 100644
 });
 
 describe("alignment", () => {
-  const doc = parseCrev(DOC);
+  const doc = parseWhymark(DOC);
   const file = doc.files[0];
 
   it("attaches note ids to the rows their selector covers", () => {

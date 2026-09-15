@@ -1,18 +1,22 @@
-# crev — read AI-written code with the reasoning attached
+# whymark — read AI-written code with the reasoning attached
 
 Reading a diff an agent produced is cheap. Deciding whether to trust it is not.
 The diff shows what changed; it never shows why that shape was chosen, what the
 agent read before writing it, which parts it invented, or what it actually ran to
 check. So you reconstruct all of that by hand, on every review.
 
-**CREV** is a file format that carries those answers next to the lines they
+**whymark** is a file format that carries those answers next to the lines they
 belong to, plus the tooling to generate, check, and read them.
 
-A `.crev` file is a unified diff with **line-addressed annotations**:
+The name is the rule. A diff already shows what changed, so a mark that repeats
+it is worth nothing; every mark in a `.whymark` file exists to say why, and to
+show what backs the claim.
 
-```crev
+A `.whymark` file is a unified diff with **line-addressed annotations**:
+
+```whymark
 ---
-crev: 1
+whymark: 1
 title: Rate limit the public search API
 author: claude-opus-5 (cursor)
 scope: branch
@@ -65,20 +69,20 @@ npm run dev            # the reviewer, at http://localhost:43917
 Generate a review of changes you already have:
 
 ```bash
-npm run crev -- new --staged     --author "claude-opus-5 (cursor)"
-npm run crev -- new --unstaged   # includes files git does not track yet
-npm run crev -- new --branch main
-npm run crev -- new --commit HEAD
+npm run whymark -- new --staged     --author "claude-opus-5 (cursor)"
+npm run whymark -- new --unstaged   # includes files git does not track yet
+npm run whymark -- new --branch main
+npm run whymark -- new --commit HEAD
 ```
 
-That writes `reviews/<slug>.crev` containing the real diff and one annotation
+That writes `reviews/<slug>.whymark` containing the real diff and one annotation
 stub per hunk. An agent fills the stubs in (see [Using it with an
 agent](#using-it-with-an-agent)), then:
 
 ```bash
-npm run crev -- validate reviews/my-change.crev --min-coverage 0.8
-npm run crev -- verify   reviews/my-change.crev --write
-npm run crev -- stats    reviews/my-change.crev
+npm run whymark -- validate reviews/my-change.whymark --min-coverage 0.8
+npm run whymark -- verify   reviews/my-change.whymark --write
+npm run whymark -- stats    reviews/my-change.whymark
 ```
 
 `verify` is the part that matters most: it re-runs every command the review
@@ -89,7 +93,7 @@ claiming a passing test that fails.
 
 ## The viewer
 
-`npm run dev` serves every `.crev` file in `reviews/`.
+`npm run dev` serves every `.whymark` file in `reviews/`.
 
 - **Code left, annotations right.** Cards sit at the vertical position of the
   lines they explain, with a coloured bracket over the exact line range and a
@@ -107,7 +111,7 @@ claiming a passing test that fails.
   and `validate` both tell you when the code has moved on since the review was
   written.
 
-`/inspect` renders a `.crev` document pasted straight from a chat, without
+`/inspect` renders a `.whymark` document pasted straight from a chat, without
 saving it. `/format` renders the specification.
 
 ## Using it with an agent
@@ -115,16 +119,16 @@ saving it. `/format` renders the specification.
 The same instructions are installed for every agent that reads a skill
 directory:
 
-- **Cursor** — `.cursor/skills/crev/SKILL.md`
-- **Codex** (and any `.agents`-aware tool) — `.agents/skills/crev/SKILL.md`
-- **Anything else** — `prompts/crev-author.md`, or generate a filled-in prompt
+- **Cursor** — `.cursor/skills/whymark/SKILL.md`
+- **Codex** (and any `.agents`-aware tool) — `.agents/skills/whymark/SKILL.md`
+- **Anything else** — `prompts/whymark-author.md`, or generate a filled-in prompt
   with the diff already embedded:
 
 ```bash
-npm run crev -- prompt --staged | pbcopy
+npm run whymark -- prompt --staged | pbcopy
 ```
 
-Ask for it in plain language once the skill is installed: *"write a crev review
+Ask for it in plain language once the skill is installed: *"write a whymark review
 of this branch"*.
 
 ### In CI
@@ -133,20 +137,20 @@ of this branch"*.
 `verify` exits non-zero when a claim is contradicted.
 
 ```bash
-npm run crev -- validate reviews/*.crev --min-coverage 0.8 --strict
-npm run crev -- verify reviews/my-change.crev
+npm run whymark -- validate reviews/*.whymark --min-coverage 0.8 --strict
+npm run whymark -- verify reviews/my-change.whymark
 ```
 
 ## CLI
 
 | Command | Does |
 | --- | --- |
-| `crev new [scope]` | Build a skeleton from a git diff |
-| `crev prompt [scope]` | Print an authoring prompt with the diff embedded |
-| `crev validate <file…>` | Structure, selector drift, staleness, coverage, stubs |
-| `crev verify <file>` | Re-run every `verify: cmd` claim (`--write` to record) |
-| `crev stats <file>` | Coverage and evidence metrics |
-| `crev fmt <file>` | Rewrite in canonical form |
+| `whymark new [scope]` | Build a skeleton from a git diff |
+| `whymark prompt [scope]` | Print an authoring prompt with the diff embedded |
+| `whymark validate <file…>` | Structure, selector drift, staleness, coverage, stubs |
+| `whymark verify <file>` | Re-run every `verify: cmd` claim (`--write` to record) |
+| `whymark stats <file>` | Coverage and evidence metrics |
+| `whymark fmt <file>` | Rewrite in canonical form |
 
 Scopes: `--unstaged`, `--staged`, `--worktree`, `--branch [base]`,
 `--commit <rev>`. Also `--path <pathspec>`, `--stubs hunk|file|none`,
@@ -155,24 +159,24 @@ Scopes: `--unstaged`, `--staged`, `--worktree`, `--branch [base]`,
 ## Repository layout
 
 ```
-spec/crev-v1.md              the format: grammar, selectors, field vocabulary
-src/lib/crev/                parser, serializer, git importer, metrics,
+spec/whymark-v1.md              the format: grammar, selectors, field vocabulary
+src/lib/whymark/                parser, serializer, git importer, metrics,
                              validator, verification runner  (no framework deps)
-src/cli/crev.ts              the CLI
+src/cli/whymark.ts              the CLI
 src/app, src/components      the viewer (Next.js, Tailwind, shadcn/ui, shiki)
-.agents/skills/crev/         the skill, canonical copy
-.cursor/skills/crev/         the same skill for Cursor
-prompts/crev-author.md       copy-paste prompt for any other agent
-reviews/*.crev               reviews the viewer lists
+.agents/skills/whymark/         the skill, canonical copy
+.cursor/skills/whymark/         the same skill for Cursor
+prompts/whymark-author.md       copy-paste prompt for any other agent
+reviews/*.whymark               reviews the viewer lists
 tests/                       parser, alignment, metrics, validation
 ```
 
-The library in `src/lib/crev` has no dependency on React or Next and only uses
+The library in `src/lib/whymark` has no dependency on React or Next and only uses
 `yaml`, so it can be lifted into any other tool.
 
 ## Why not just a good PR description?
 
-A PR description sits far from the code and rots on the first force-push. CREV
+A PR description sits far from the code and rots on the first force-push. whymark
 annotations are addressed to line ranges, so `validate` can tell you an
 annotation has drifted off its code, and to blob hashes, so it can tell you the
 review is stale. And a description cannot be re-executed — `verify` can.
@@ -193,7 +197,7 @@ every card in its server-computed position while the toggles, filters, and
 keyboard shortcuts silently do nothing. It asserts that cards line up with the
 code they explain, that none overlap, and that each control responds.
 
-The format is versioned: every document declares `crev: 1`, and a parser warns
+The format is versioned: every document declares `whymark: 1`, and a parser warns
 rather than fails when it meets a version it does not implement.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how changes get reviewed here.

@@ -1,6 +1,6 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import {
-  type CrevDocument,
+  type WhymarkDocument,
   type FileSection,
   type Hunk,
   type Note,
@@ -362,7 +362,7 @@ export interface SkeletonOptions extends DiffRequest {
 }
 
 export function buildSkeleton(options: SkeletonOptions): {
-  doc: CrevDocument;
+  doc: WhymarkDocument;
   diff: DiffResult;
 } {
   const diff = collectDiff(options);

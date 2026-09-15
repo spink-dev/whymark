@@ -2,7 +2,7 @@
 
 import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Risk, SourceRef, VerifyClaim, VerifyStatus } from "@/lib/crev/types";
+import type { Risk, SourceRef, VerifyClaim, VerifyStatus } from "@/lib/whymark/types";
 import { SOURCE_META, STATUS_COLOR, STATUS_LABEL, VERIFY_META } from "./meta";
 import { inline } from "./markdown";
 
@@ -19,9 +19,9 @@ export function StatusDot({ status, className }: { status: VerifyStatus; classNa
 export function RiskPill({ risk }: { risk: Risk }) {
   const tone =
     risk === "high"
-      ? "var(--crev-fail)"
+      ? "var(--whymark-fail)"
       : risk === "medium"
-        ? "var(--crev-unknown)"
+        ? "var(--whymark-unknown)"
         : "var(--muted-foreground)";
   return (
     <span
@@ -41,10 +41,10 @@ export function Confidence({ value }: { value: number }) {
   const pct = Math.round(value * 100);
   const tone =
     value >= 0.8
-      ? "var(--crev-pass)"
+      ? "var(--whymark-pass)"
       : value >= 0.5
-        ? "var(--crev-unknown)"
-        : "var(--crev-fail)";
+        ? "var(--whymark-unknown)"
+        : "var(--whymark-fail)";
   return (
     <span
       className="inline-flex items-center gap-1 text-[10px] tabular-nums text-muted-foreground"
@@ -78,17 +78,17 @@ export function SourceRow({ source }: { source: SourceRef }) {
       className={cn(
         "flex gap-2 rounded-md px-2 py-1.5 text-[12px] leading-snug",
         isInference
-          ? "bg-[color-mix(in_oklch,var(--crev-inference)_12%,transparent)]"
+          ? "bg-[color-mix(in_oklch,var(--whymark-inference)_12%,transparent)]"
           : "bg-foreground/[0.035]",
       )}
     >
       <Icon
         className="mt-[3px] size-3 shrink-0"
-        style={{ color: isInference ? "var(--crev-inference)" : "var(--kind-source)" }}
+        style={{ color: isInference ? "var(--whymark-inference)" : "var(--kind-source)" }}
       />
       <div className="min-w-0 flex-1">
         {isInference ? (
-          <div className="font-medium text-[color:var(--crev-inference)]">
+          <div className="font-medium text-[color:var(--whymark-inference)]">
             no external source — inferred
           </div>
         ) : href ? (

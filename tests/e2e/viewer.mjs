@@ -1,12 +1,12 @@
 // Interaction checks against a running dev server. The viewer's whole point is
 // that a card sits beside the code it explains, and a server-only render still
 // looks right while every control is dead, so these assert behaviour in a real
-// browser. Usage: npm run dev, then CREV_URL=http://127.0.0.1:43917 node tests/e2e/viewer.mjs
+// browser. Usage: npm run dev, then WHYMARK_URL=http://127.0.0.1:43917 node tests/e2e/viewer.mjs
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
-const BASE = process.env.CREV_URL ?? "http://127.0.0.1:43917";
-const OUT = process.env.CREV_ARTIFACTS ?? ".artifacts";
+const BASE = process.env.WHYMARK_URL ?? "http://127.0.0.1:43917";
+const OUT = process.env.WHYMARK_ARTIFACTS ?? ".artifacts";
 mkdirSync(OUT, { recursive: true });
 
 const results = [];
@@ -49,7 +49,7 @@ await page.waitForTimeout(400);
 const countSplitRows = () =>
   page.evaluate(
     () =>
-      [...document.querySelectorAll(".crev-row")].filter((row) =>
+      [...document.querySelectorAll(".whymark-row")].filter((row) =>
         row.querySelector(":scope > span.w-px"),
       ).length,
   );
@@ -68,7 +68,7 @@ await page.mouse.click(600, 300); // move focus into the document
 await page.keyboard.press("j");
 await page.waitForTimeout(500);
 const firstActive = await page.evaluate(
-  () => document.querySelector("[id^='note-'].crev-flash")?.id ?? null,
+  () => document.querySelector("[id^='note-'].whymark-flash")?.id ?? null,
 );
 await page.keyboard.press("j");
 await page.waitForTimeout(500);
@@ -102,7 +102,7 @@ const card = page.locator("[id^='note-']").nth(2);
 await card.hover({ force: true });
 await page.waitForTimeout(300);
 const tinted = await page.evaluate(() => {
-  return [...document.querySelectorAll(".crev-row")].filter((row) => {
+  return [...document.querySelectorAll(".whymark-row")].filter((row) => {
     const bg = getComputedStyle(row).backgroundColor;
     return bg && bg !== "rgba(0, 0, 0, 0)" && !bg.includes("0.1");
   }).length;
@@ -115,7 +115,7 @@ const alignment = await page.evaluate(() => {
   const out = [];
   for (const card of document.querySelectorAll("[id^='note-']")) {
     const id = card.id.replace("note-", "");
-    const rows = [...document.querySelectorAll(".crev-row")].filter((row) =>
+    const rows = [...document.querySelectorAll(".whymark-row")].filter((row) =>
       row.dataset.notes?.split(" ").includes(id),
     );
     if (!rows.length) continue;
@@ -164,7 +164,7 @@ const secondReview = await page.evaluate(() => {
   for (const wrapper of cards) {
     const card = wrapper.querySelector("[id^='note-']");
     const id = card?.id.replace("note-", "");
-    const row = [...document.querySelectorAll(".crev-row")].find((candidate) =>
+    const row = [...document.querySelectorAll(".whymark-row")].find((candidate) =>
       candidate.dataset.notes?.split(" ").includes(id ?? ""),
     );
     if (!row) continue;

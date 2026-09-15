@@ -1,9 +1,9 @@
 import YAML from "yaml";
 import {
-  CREV_VERSION,
+  WHYMARK_VERSION,
   NOTE_KINDS,
   VERIFY_METHODS,
-  type CrevDocument,
+  type WhymarkDocument,
   type Diagnostic,
   type DiffLine,
   type FileSection,
@@ -90,7 +90,7 @@ export interface ParseOptions {
   filename?: string;
 }
 
-export function parseCrev(input: string, options: ParseOptions = {}): CrevDocument {
+export function parseWhymark(input: string, options: ParseOptions = {}): WhymarkDocument {
   const text = input.replace(/\r\n?/g, "\n");
   const lines = text.split("\n");
   const diagnostics: Diagnostic[] = [];
@@ -116,7 +116,7 @@ export function parseCrev(input: string, options: ParseOptions = {}): CrevDocume
       level: "error",
       code: "frontmatter-missing",
       message:
-        "Document has no YAML frontmatter. A CREV file must start with `---` and declare `crev: 1` and `title`.",
+        "Document has no YAML frontmatter. A whymark file must start with `---` and declare `whymark: 1` and `title`.",
       line: 1,
     });
   }
@@ -274,7 +274,7 @@ function parseFrontmatter(source: string, diagnostics: Diagnostic[]): Meta {
   }
 
   const known = new Set([
-    "crev",
+    "whymark",
     "title",
     "author",
     "date",
@@ -290,20 +290,20 @@ function parseFrontmatter(source: string, diagnostics: Diagnostic[]): Meta {
   ]);
 
   const meta = emptyMeta();
-  meta.crev = typeof data.crev === "number" ? data.crev : NaN;
-  if (Number.isNaN(meta.crev)) {
+  meta.whymark = typeof data.whymark === "number" ? data.whymark : NaN;
+  if (Number.isNaN(meta.whymark)) {
     diagnostics.push({
       level: "error",
       code: "version-missing",
-      message: "Frontmatter must declare `crev: 1`.",
+      message: "Frontmatter must declare `whymark: 1`.",
       line: 2,
     });
-    meta.crev = CREV_VERSION;
-  } else if (meta.crev !== CREV_VERSION) {
+    meta.whymark = WHYMARK_VERSION;
+  } else if (meta.whymark !== WHYMARK_VERSION) {
     diagnostics.push({
       level: "warning",
       code: "version-unsupported",
-      message: `Document declares crev ${meta.crev}; this tool implements ${CREV_VERSION}.`,
+      message: `Document declares whymark ${meta.whymark}; this tool implements ${WHYMARK_VERSION}.`,
       line: 2,
     });
   }

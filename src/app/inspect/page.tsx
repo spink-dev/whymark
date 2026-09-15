@@ -3,11 +3,11 @@ import { ArrowLeft } from "lucide-react";
 import { InspectClient } from "./inspect-client";
 
 export const metadata = {
-  title: "Paste a review — crev",
+  title: "Paste a review — whymark",
 };
 
 const SAMPLE = `---
-crev: 1
+whymark: 1
 title: Reject expired invite tokens
 author: your-model (paste this anywhere)
 scope: staged
@@ -63,7 +63,7 @@ export default function InspectPage() {
         <div>
           <h1 className="text-[15px] font-medium">Paste a review</h1>
           <p className="text-[12.5px] text-muted-foreground">
-            Render any <code className="font-mono">.crev</code> document without saving it —
+            Render any <code className="font-mono">.whymark</code> document without saving it —
             useful for a review an agent just wrote into the chat.
           </p>
         </div>

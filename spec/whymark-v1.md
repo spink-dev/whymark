@@ -1,15 +1,18 @@
-# CREV v1 — Code Review with Evidence & Verification
+# whymark v1 — a diff, marked with why
 
-**File extension:** `.crev` · **Media type:** `text/vnd.crev` · **Encoding:** UTF-8, LF
+**File extension:** `.whymark` · **Media type:** `text/vnd.whymark` · **Encoding:** UTF-8, LF
 
-CREV is a plain-text file format for reviewing code changes. The left side of a
-CREV file is an ordinary unified diff. The right side is a set of structured
+whymark is a plain-text file format for reviewing code changes. The left side of a
+whymark file is an ordinary unified diff. The right side is a set of structured
 **annotations** addressed to specific line ranges of that diff: why the change
 was made, what evidence backs it, how it was verified, and what is still
 uncertain.
 
+The name states the format's one rule. A diff already shows *what* changed, so a
+mark that repeats it is worth nothing; every mark here exists to say why.
+
 It exists because reading an AI-authored diff is cheap but *trusting* it is
-expensive. A CREV file carries the reasoning and the receipts next to the code
+expensive. A whymark file carries the reasoning and the receipts next to the code
 they belong to, so a reviewer spends their time judging decisions instead of
 reconstructing them.
 
@@ -19,7 +22,7 @@ Three properties drove the design:
    no JSON string-quoted source code. Annotations are addressed by line number,
    not by position on a rendered page — a model cannot get the alignment wrong.
 2. **A tool can generate the skeleton.** The diff half comes straight from
-   `git diff`, so a CREV file can be produced for unstaged, staged, branch, or
+   `git diff`, so a whymark file can be produced for unstaged, staged, branch, or
    commit changes and then annotated.
 3. **Claims are checkable.** Verification claims name the exact command they
    came from, and file sections carry git blob hashes, so a reader can re-run the
@@ -40,9 +43,9 @@ Three properties drove the design:
 
 A minimal but complete document:
 
-```crev
+```whymark
 ---
-crev: 1
+whymark: 1
 title: Cache the user lookup in the session middleware
 author: claude-opus-5 (cursor)
 date: 2026-09-15T12:04:00Z
@@ -86,7 +89,7 @@ todo: confirm with the auth owner whether mid-request grants are possible.
 
 ### 1.1 Line kinds
 
-Every line in a CREV document is exactly one of:
+Every line in a whymark document is exactly one of:
 
 | Line | Meaning |
 | --- | --- |
@@ -101,7 +104,7 @@ Every line in a CREV document is exactly one of:
 | empty | Separator, or a context line inside a hunk (§3.3) |
 
 Directives are recognised only at column 0, and diff content always carries a
-one-character prefix, so a diff of a CREV file cannot be misparsed.
+one-character prefix, so a diff of a whymark file cannot be misparsed.
 
 ---
 
@@ -111,7 +114,7 @@ Strict YAML between two `---` fences at the very start of the file.
 
 | Key | Req | Type | Notes |
 | --- | --- | --- | --- |
-| `crev` | ✔ | int | Format version. `1`. |
+| `whymark` | ✔ | int | Format version. `1`. |
 | `title` | ✔ | string | One line, imperative. What the change does. |
 | `author` |  | string | Model and/or human. `claude-opus-5 (cursor)`. |
 | `date` |  | ISO 8601 | When the review was written. |
@@ -125,7 +128,7 @@ Strict YAML between two `---` fences at the very start of the file.
 | `review` |  | Review | Human review state (§2.2). |
 | `stats` |  | object | Optional cache of `files`/`added`/`removed`; recomputed by tools. |
 
-Unknown keys are preserved and reported as warnings by `crev validate`.
+Unknown keys are preserved and reported as warnings by `whymark validate`.
 
 ### 2.1 `checks`
 
@@ -142,7 +145,7 @@ checks:
     ran: 2026-09-15T12:03:11Z
 ```
 
-`status` is `pass` | `fail` | `unknown` | `skipped`. `crev verify` re-runs every
+`status` is `pass` | `fail` | `unknown` | `skipped`. `whymark verify` re-runs every
 `cmd` and rewrites `status`, `detail`, and `ran` with what actually happened.
 
 ### 2.2 `review`
@@ -168,7 +171,7 @@ after it is order-independent. `status` is one of `added` `modified` `deleted`
 no changes of its own.
 
 `newsha` is the git blob hash of the file's new content (`git hash-object`).
-`crev validate` compares it against the working tree and reports the review as
+`whymark validate` compares it against the working tree and reports the review as
 **stale** when they differ — the change moved on and the annotations may no
 longer describe it. `oldsha` does the same for the base side.
 
@@ -339,7 +342,7 @@ verify: manual "429 after the 101st request" => pass
 verify: none => unknown (needs a load test)
 ```
 
-`crev verify` re-runs every `cmd` claim, compares the exit code to the claimed
+`whymark verify` re-runs every `cmd` claim, compares the exit code to the claimed
 status, and reports each claim as **confirmed**, **contradicted**, or
 **unrunnable**. A claim of `pass` on a command that now exits non-zero is the
 single highest-value signal in the format.
@@ -390,7 +393,7 @@ document is slightly wrong. Required recoveries, each reported as a warning:
 | Blank line inside a hunk | Empty context line; trailing ones dropped at the hunk's end |
 | Unknown `kind`, `risk`, or field name | Keep the value, warn, treat kind as `note` |
 | Duplicate annotation `id` | Rename the later one |
-| No frontmatter, or no `crev:`/`title:` | Report an error but still parse the body |
+| No frontmatter, or no `whymark:`/`title:` | Report an error but still parse the body |
 
 Dropping content silently is the one unacceptable outcome: a reviewer cannot
 notice a sentence that was never displayed.
@@ -400,7 +403,7 @@ notice a sentence that was never displayed.
 A **parser** must accept every example in this document, address annotations by
 line number, and perform every recovery in §7.
 
-A **writer** must emit `crev: 1` and `title`, must not emit an annotation whose
+A **writer** must emit `whymark: 1` and `title`, must not emit an annotation whose
 selector names lines absent from the diff, and should emit `newsha` for every
 file it takes from git.
 
@@ -419,7 +422,7 @@ span a range, let several annotations cover the same line for different reasons,
 and survive a re-generated diff.
 
 **Why keep unified diff?** Every tool already speaks it, `git diff` produces it,
-and a CREV file therefore degrades gracefully: strip the annotations and it is
+and a whymark file therefore degrades gracefully: strip the annotations and it is
 still a patch a reviewer can read.
 
 **Why is provenance a first-class field?** The reviewer's real question about

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { allNotes, type Check, type CrevDocument, type Note, type VerifyClaim } from "./types";
+import { allNotes, type Check, type WhymarkDocument, type Note, type VerifyClaim } from "./types";
 
 export type Outcome = "confirmed" | "contradicted" | "unrunnable" | "recorded";
 
@@ -55,7 +55,7 @@ export function runCommand(cmd: string, options: VerifyOptions = {}): RunResult 
 
 /** Re-runs every `cmd` verification claim and every frontmatter check. */
 export function verifyDocument(
-  doc: CrevDocument,
+  doc: WhymarkDocument,
   options: VerifyOptions = {},
 ): ClaimResult[] {
   const results: ClaimResult[] = [];
@@ -185,6 +185,6 @@ export function summariseResults(results: ClaimResult[]) {
   };
 }
 
-export function notesById(doc: CrevDocument): Map<string, Note> {
+export function notesById(doc: WhymarkDocument): Map<string, Note> {
   return new Map(allNotes(doc).map((n) => [n.id, n]));
 }

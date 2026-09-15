@@ -42,7 +42,7 @@ recording exactly these things:
 
   * A passing verification claim records that a command succeeded at the moment
     a review was written. It is evidence about that moment and nothing more.
-    Use `crev verify` to re-establish it.
+    Use `whymark verify` to re-establish it.
 
 This acknowledgement grants no rights and imposes no conditions beyond the MIT
 License above; it neither adds to nor narrows that license. It restates the

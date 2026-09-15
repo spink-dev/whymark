@@ -8,9 +8,9 @@ import {
   Terminal,
 } from "lucide-react";
 import { listReviews } from "@/lib/reviews";
-import { CoverageBar, Ring } from "@/components/crev/meters";
-import { KIND_META, STATUS_COLOR } from "@/components/crev/meta";
-import type { NoteKind } from "@/lib/crev/types";
+import { CoverageBar, Ring } from "@/components/whymark/meters";
+import { KIND_META, STATUS_COLOR } from "@/components/whymark/meta";
+import type { NoteKind } from "@/lib/whymark/types";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export default async function Home() {
         <div>
           <div className="flex items-center gap-2">
             <span className="rounded-md bg-foreground px-1.5 py-0.5 font-mono text-[13px] font-semibold text-background">
-              crev
+              whymark
             </span>
             <span className="font-mono text-[12px] text-muted-foreground">v1</span>
           </div>
@@ -31,7 +31,7 @@ export default async function Home() {
             Read AI-written code with the reasoning attached to it.
           </h1>
           <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
-            A <code className="font-mono text-foreground/80">.crev</code> file is a diff on
+            A <code className="font-mono text-foreground/80">.whymark</code> file is a diff on
             the left and annotations on the right, addressed to individual lines: why the
             code is that way, which source it came from, and what was actually run to check
             it. Written by the agent, checkable by you.
@@ -110,14 +110,14 @@ export default async function Home() {
                 <span className="inline-flex items-center gap-1 font-mono">
                   <FileDiff className="size-3" />
                   {stats.files}
-                  <span className="text-[color:var(--crev-add)]">+{stats.added}</span>
-                  <span className="text-[color:var(--crev-del)]">−{stats.removed}</span>
+                  <span className="text-[color:var(--whymark-add)]">+{stats.added}</span>
+                  <span className="text-[color:var(--whymark-del)]">−{stats.removed}</span>
                 </span>
                 <CoverageBar value={stats.coverage} width={56} />
                 {stats.inferenceOnly ? (
                   <span
                     className="inline-flex items-center gap-1"
-                    style={{ color: "var(--crev-inference)" }}
+                    style={{ color: "var(--whymark-inference)" }}
                     title="Annotations whose only provenance is the model's own inference"
                   >
                     <Sparkles className="size-3" />
@@ -154,7 +154,7 @@ export default async function Home() {
           title="Generate"
           body={
             <>
-              <code className="font-mono">npm run crev -- new --staged</code> turns your
+              <code className="font-mono">npm run whymark -- new --staged</code> turns your
               staged, unstaged, branch, or commit diff into a skeleton with one annotation
               stub per hunk.
             </>
@@ -168,7 +168,7 @@ export default async function Home() {
               The agent fills every <code className="font-mono">why</code>,{" "}
               <code className="font-mono">source</code> and{" "}
               <code className="font-mono">verify</code> field. The skill in{" "}
-              <code className="font-mono">.agents/skills/crev</code> tells it how, in Cursor
+              <code className="font-mono">.agents/skills/whymark</code> tells it how, in Cursor
               and Codex alike.
             </>
           }
@@ -178,7 +178,7 @@ export default async function Home() {
           title="Check"
           body={
             <>
-              <code className="font-mono">crev verify</code> re-runs every command the review
+              <code className="font-mono">whymark verify</code> re-runs every command the review
               claims to have run and rewrites the file with what actually happened. Then read
               it here.
             </>
@@ -208,12 +208,12 @@ function EmptyState() {
     <div className="mb-6 rounded-xl border border-dashed border-border bg-card/30 p-6">
       <h2 className="text-[14px] font-medium">No reviews yet</h2>
       <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-muted-foreground">
-        Drop a <code className="font-mono">.crev</code> file into{" "}
+        Drop a <code className="font-mono">.whymark</code> file into{" "}
         <code className="font-mono">reviews/</code> and it shows up here. To create one from
         changes you already have:
       </p>
-      <pre className="crev-scroll mt-3 overflow-x-auto rounded-lg border border-border/60 bg-black/30 p-3 font-mono text-[12px]">
-        <code>{`npm run crev -- new --staged --author "your model"\nnpm run crev -- prompt --branch main   # hand the diff to an agent`}</code>
+      <pre className="whymark-scroll mt-3 overflow-x-auto rounded-lg border border-border/60 bg-black/30 p-3 font-mono text-[12px]">
+        <code>{`npm run whymark -- new --staged --author "your model"\nnpm run whymark -- prompt --branch main   # hand the diff to an agent`}</code>
       </pre>
     </div>
   );

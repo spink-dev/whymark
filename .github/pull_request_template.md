@@ -6,8 +6,8 @@
 
 - [ ] A human has read this change (required — see CONTRIBUTING.md)
 - [ ] Written mostly by an AI agent
-- [ ] A `.crev` review is attached under `reviews/`, and `crev validate` passes
-- [ ] `crev verify` re-run against this branch, and its claims still pass
+- [ ] A `.whymark` review is attached under `reviews/`, and `whymark validate` passes
+- [ ] `whymark verify` re-run against this branch, and its claims still pass
 
 ## Checks
 

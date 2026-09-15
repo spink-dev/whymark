@@ -1,8 +1,8 @@
 /**
- * CREV v1 document model. See spec/crev-v1.md for the format itself.
+ * whymark v1 document model. See spec/whymark-v1.md for the format itself.
  */
 
-export const CREV_VERSION = 1;
+export const WHYMARK_VERSION = 1;
 
 export type Scope =
   | "unstaged"
@@ -190,7 +190,7 @@ export interface ReviewState {
 }
 
 export interface Meta {
-  crev: number;
+  whymark: number;
   title: string;
   author?: string;
   date?: string;
@@ -212,13 +212,13 @@ export interface Diagnostic {
   level: DiagnosticLevel;
   code: string;
   message: string;
-  /** 1-based line in the .crev document. */
+  /** 1-based line in the .whymark document. */
   line?: number;
   file?: string;
   noteId?: string;
 }
 
-export interface CrevDocument {
+export interface WhymarkDocument {
   meta: Meta;
   files: FileSection[];
   /** Notes written before the first `@file`. */
@@ -228,7 +228,7 @@ export interface CrevDocument {
 
 export function emptyMeta(title = "Untitled review"): Meta {
   return {
-    crev: CREV_VERSION,
+    whymark: WHYMARK_VERSION,
     title,
     tags: [],
     checks: [],
@@ -236,7 +236,7 @@ export function emptyMeta(title = "Untitled review"): Meta {
   };
 }
 
-export function allNotes(doc: CrevDocument): Note[] {
+export function allNotes(doc: WhymarkDocument): Note[] {
   return [...doc.notes, ...doc.files.flatMap((f) => f.notes)];
 }
 

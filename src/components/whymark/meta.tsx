@@ -29,7 +29,7 @@ import {
   Terminal,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { NoteKind, SourceType, VerifyMethod, VerifyStatus } from "@/lib/crev/types";
+import type { NoteKind, SourceType, VerifyMethod, VerifyStatus } from "@/lib/whymark/types";
 
 export interface KindMeta {
   label: string;
@@ -147,9 +147,9 @@ export const VERIFY_META: Record<VerifyMethod, { icon: LucideIcon; label: string
 };
 
 export const STATUS_COLOR: Record<VerifyStatus, string> = {
-  pass: "var(--crev-pass)",
-  fail: "var(--crev-fail)",
-  unknown: "var(--crev-unknown)",
+  pass: "var(--whymark-pass)",
+  fail: "var(--whymark-fail)",
+  unknown: "var(--whymark-unknown)",
   skipped: "var(--muted-foreground)",
 };
 

@@ -16,10 +16,10 @@ Attach a review. That is what this repository is for, and reviewing agent output
 without one is the problem it was built to solve.
 
 ```bash
-npm run crev -- new --branch main -o reviews/my-change.crev
-npm run crev -- prompt --branch main        # give this to the agent to fill in
-npm run crev -- validate reviews/my-change.crev --min-coverage 0.8
-npm run crev -- verify reviews/my-change.crev --write
+npm run whymark -- new --branch main -o reviews/my-change.whymark
+npm run whymark -- prompt --branch main        # give this to the agent to fill in
+npm run whymark -- validate reviews/my-change.whymark --min-coverage 0.8
+npm run whymark -- verify reviews/my-change.whymark --write
 ```
 
 Two things make a review worth a reviewer's time:
@@ -39,7 +39,7 @@ Read the annotations against the code, and treat these as the failure modes:
 - An `inference` that is load-bearing for correctness and easy to confirm — go
   confirm it.
 - A verification claim that passes but does not exercise the change.
-- Uncovered added lines. `crev stats` reports coverage; the gaps are where an
+- Uncovered added lines. `whymark stats` reports coverage; the gaps are where an
   agent had nothing to say about its own work.
 
 ## Before opening a pull request

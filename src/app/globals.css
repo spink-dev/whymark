@@ -130,25 +130,25 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* CREV review surface                                                 */
+/* whymark review surface                                                 */
 /* ------------------------------------------------------------------ */
 
 :root {
   /* One line of code. Every alignment calculation depends on this being
      constant, so code lines never wrap. */
-  --crev-line-height: 21px;
+  --whymark-line-height: 21px;
 
-  --crev-add: oklch(0.72 0.16 150);
-  --crev-del: oklch(0.68 0.19 22);
-  --crev-add-bg: oklch(0.72 0.16 150 / 0.11);
-  --crev-del-bg: oklch(0.68 0.19 22 / 0.1);
-  --crev-add-strong: oklch(0.72 0.16 150 / 0.26);
-  --crev-del-strong: oklch(0.68 0.19 22 / 0.24);
+  --whymark-add: oklch(0.72 0.16 150);
+  --whymark-del: oklch(0.68 0.19 22);
+  --whymark-add-bg: oklch(0.72 0.16 150 / 0.11);
+  --whymark-del-bg: oklch(0.68 0.19 22 / 0.1);
+  --whymark-add-strong: oklch(0.72 0.16 150 / 0.26);
+  --whymark-del-strong: oklch(0.68 0.19 22 / 0.24);
 
-  --crev-pass: oklch(0.74 0.15 155);
-  --crev-fail: oklch(0.67 0.2 25);
-  --crev-unknown: oklch(0.79 0.15 85);
-  --crev-inference: oklch(0.8 0.13 75);
+  --whymark-pass: oklch(0.74 0.15 155);
+  --whymark-fail: oklch(0.67 0.2 25);
+  --whymark-unknown: oklch(0.79 0.15 85);
+  --whymark-inference: oklch(0.8 0.13 75);
 
   --kind-intent: oklch(0.72 0.14 240);
   --kind-source: oklch(0.74 0.13 195);
@@ -165,20 +165,20 @@
   --kind-note: oklch(0.68 0.02 265);
 }
 
-.crev-code {
+.whymark-code {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 12.5px;
-  line-height: var(--crev-line-height);
+  line-height: var(--whymark-line-height);
   font-variant-ligatures: none;
   tab-size: 2;
 }
 
-.crev-row {
-  height: var(--crev-line-height);
+.whymark-row {
+  height: var(--whymark-line-height);
   white-space: pre;
 }
 
-.crev-gutter {
+.whymark-gutter {
   color: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
   user-select: none;
 }
@@ -188,7 +188,7 @@
  * the lines it describes. The dashed rule continues the gutter edge through the
  * gap, so it reads as deliberate rather than as a hole in the diff.
  */
-.crev-gap {
+.whymark-gap {
   background-image: linear-gradient(
     to bottom,
     color-mix(in oklch, var(--muted-foreground) 45%, transparent) 0 3px,
@@ -199,19 +199,19 @@
   background-size: 1px 8px;
 }
 
-.crev-scroll::-webkit-scrollbar {
+.whymark-scroll::-webkit-scrollbar {
   height: 10px;
   width: 10px;
 }
-.crev-scroll::-webkit-scrollbar-thumb {
+.whymark-scroll::-webkit-scrollbar-thumb {
   background: color-mix(in oklch, var(--foreground) 18%, transparent);
   border-radius: 999px;
 }
-.crev-scroll::-webkit-scrollbar-track {
+.whymark-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-@keyframes crev-flash {
+@keyframes whymark-flash {
   0% {
     background-color: color-mix(in oklch, var(--kind-intent) 30%, transparent);
   }
@@ -219,6 +219,6 @@
     background-color: transparent;
   }
 }
-.crev-flash {
-  animation: crev-flash 900ms ease-out;
+.whymark-flash {
+  animation: whymark-flash 900ms ease-out;
 }

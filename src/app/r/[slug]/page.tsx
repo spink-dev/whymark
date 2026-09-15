@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { loadReview, listReviews } from "@/lib/reviews";
-import { validateDocument } from "@/lib/crev/validate";
+import { validateDocument } from "@/lib/whymark/validate";
 import { buildReviewVM } from "@/lib/view-model";
-import { ReviewView } from "@/components/crev/review-view";
+import { ReviewView } from "@/components/whymark/review-view";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: PageProps<"/r/[slug]">) {
   const review = await loadReview(slug);
   if (!review) return { title: "Review not found" };
   return {
-    title: `${review.doc.meta.title} — crev`,
+    title: `${review.doc.meta.title} — whymark`,
     description: review.doc.meta.summary?.slice(0, 180),
   };
 }

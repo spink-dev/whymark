@@ -1,7 +1,7 @@
 import YAML from "yaml";
 import {
   type Check,
-  type CrevDocument,
+  type WhymarkDocument,
   type FileSection,
   type Hunk,
   type Meta,
@@ -13,8 +13,8 @@ export interface SerializeOptions {
   wrap?: number;
 }
 
-export function serializeCrev(
-  doc: CrevDocument,
+export function serializeWhymark(
+  doc: WhymarkDocument,
   options: SerializeOptions = {},
 ): string {
   const wrap = options.wrap ?? 78;
@@ -47,7 +47,7 @@ export function serializeCrev(
 }
 
 export function serializeFrontmatter(meta: Meta): string {
-  const data: Record<string, unknown> = { crev: meta.crev, title: meta.title };
+  const data: Record<string, unknown> = { whymark: meta.whymark, title: meta.title };
   if (meta.author) data.author = meta.author;
   if (meta.date) data.date = meta.date;
   if (meta.scope) data.scope = meta.scope;

@@ -2,10 +2,10 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { Markdown } from "@/components/crev/markdown";
+import { Markdown } from "@/components/whymark/markdown";
 
 export const metadata = {
-  title: "CREV v1 format — crev",
+  title: "whymark v1 format — whymark",
 };
 
 export const dynamic = "force-dynamic";
@@ -13,9 +13,9 @@ export const dynamic = "force-dynamic";
 export default async function FormatPage() {
   let spec: string;
   try {
-    spec = await readFile(join(process.cwd(), "spec", "crev-v1.md"), "utf8");
+    spec = await readFile(join(process.cwd(), "spec", "whymark-v1.md"), "utf8");
   } catch {
-    spec = "# Specification missing\n\nExpected to find `spec/crev-v1.md` in this repository.";
+    spec = "# Specification missing\n\nExpected to find `spec/whymark-v1.md` in this repository.";
   }
 
   return (
@@ -28,7 +28,7 @@ export default async function FormatPage() {
         >
           <ArrowLeft className="size-4" />
         </Link>
-        <span className="font-mono text-[12px] text-muted-foreground">spec/crev-v1.md</span>
+        <span className="font-mono text-[12px] text-muted-foreground">spec/whymark-v1.md</span>
       </header>
       <Markdown
         text={spec}

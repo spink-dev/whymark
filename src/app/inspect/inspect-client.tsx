@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useTransition } from "react";
 import { FileUp, Play, Sparkles } from "lucide-react";
-import { ReviewView } from "@/components/crev/review-view";
+import { ReviewView } from "@/components/whymark/review-view";
 import { renderPasted, type RenderResult } from "./actions";
 
 export function InspectClient({ sample }: { sample: string }) {
@@ -69,8 +69,8 @@ export function InspectClient({ sample }: { sample: string }) {
           value={text}
           onChange={(event) => setText(event.target.value)}
           spellCheck={false}
-          placeholder={"---\ncrev: 1\ntitle: …\n---\n\n@file src/thing.ts modified\n@@ -1,3 +1,4 @@\n…"}
-          className="crev-scroll crev-code min-h-[45vh] w-full resize-y rounded-lg bg-black/20 p-3 outline-none placeholder:text-muted-foreground/50"
+          placeholder={"---\nwhymark: 1\ntitle: …\n---\n\n@file src/thing.ts modified\n@@ -1,3 +1,4 @@\n…"}
+          className="whymark-scroll whymark-code min-h-[45vh] w-full resize-y rounded-lg bg-black/20 p-3 outline-none placeholder:text-muted-foreground/50"
         />
       </div>
 
@@ -95,12 +95,12 @@ export function InspectClient({ sample }: { sample: string }) {
         </button>
         <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
           <FileUp className="size-3.5" />
-          or drop a .crev file anywhere above
+          or drop a .whymark file anywhere above
         </span>
       </div>
 
       {error ? (
-        <p className="text-[12.5px]" style={{ color: "var(--crev-fail)" }}>
+        <p className="text-[12.5px]" style={{ color: "var(--whymark-fail)" }}>
           {error}
         </p>
       ) : null}

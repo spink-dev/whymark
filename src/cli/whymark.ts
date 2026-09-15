@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
-import { parseCrev } from "../lib/crev/parse";
-import { serializeCrev } from "../lib/crev/serialize";
-import { buildSkeleton, isGitRepo, repoRoot, type StubMode } from "../lib/crev/git";
-import { computeStats, percent } from "../lib/crev/stats";
-import { validateDocument } from "../lib/crev/validate";
-import { summariseResults, verifyDocument, type ClaimResult } from "../lib/crev/verify";
-import type { Scope } from "../lib/crev/types";
+import { parseWhymark } from "../lib/whymark/parse";
+import { serializeWhymark } from "../lib/whymark/serialize";
+import { buildSkeleton, isGitRepo, repoRoot, type StubMode } from "../lib/whymark/git";
+import { computeStats, percent } from "../lib/whymark/stats";
+import { validateDocument } from "../lib/whymark/validate";
+import { summariseResults, verifyDocument, type ClaimResult } from "../lib/whymark/verify";
+import type { Scope } from "../lib/whymark/types";
 
 const c = colors();
 
@@ -97,16 +97,16 @@ function isValue(token: string | undefined): token is string {
   return token !== undefined && (token === "-" || !token.startsWith("-"));
 }
 
-const HELP = `${c.bold("crev")} — review AI-written code with evidence attached
+const HELP = `${c.bold("whymark")} — review AI-written code with evidence attached
 
 ${c.bold("USAGE")}
-  crev new [scope]            build a .crev skeleton from a git diff
-  crev prompt [scope]         print an authoring prompt with the diff embedded
-  crev validate <file...>     check structure, staleness, coverage
-  crev verify <file>          re-run every \`verify: cmd\` claim
-  crev stats <file>           coverage and evidence metrics
-  crev fmt <file>             rewrite in canonical form
-  crev view                   how to open the visual reviewer
+  whymark new [scope]            build a .whymark skeleton from a git diff
+  whymark prompt [scope]         print an authoring prompt with the diff embedded
+  whymark validate <file...>     check structure, staleness, coverage
+  whymark verify <file>          re-run every \`verify: cmd\` claim
+  whymark stats <file>           coverage and evidence metrics
+  whymark fmt <file>             rewrite in canonical form
+  whymark view                   how to open the visual reviewer
 
 ${c.bold("SCOPE")}  (default: --worktree, falling back to --staged)
   --unstaged                  git diff
@@ -116,7 +116,7 @@ ${c.bold("SCOPE")}  (default: --worktree, falling back to --staged)
   --commit <rev>              git show <rev>
 
 ${c.bold("OPTIONS")}
-  -o, --out <path>            output file (default reviews/<slug>.crev, - for stdout)
+  -o, --out <path>            output file (default reviews/<slug>.whymark, - for stdout)
   --title <text>              review title
   --author <text>             e.g. "claude-opus-5 (cursor)"
   --stubs hunk|file|none      how many annotation stubs to pre-create (default hunk)
@@ -131,10 +131,10 @@ ${c.bold("OPTIONS")}
   --json                      machine-readable output
 
 ${c.bold("EXAMPLES")}
-  crev new --staged --author "claude-opus-5 (cursor)" -o reviews/auth.crev
-  crev prompt --branch main | pbcopy
-  crev validate reviews/*.crev --min-coverage 0.8
-  crev verify reviews/auth.crev --write
+  whymark new --staged --author "claude-opus-5 (cursor)" -o reviews/auth.whymark
+  whymark prompt --branch main | pbcopy
+  whymark validate reviews/*.whymark --min-coverage 0.8
+  whymark verify reviews/auth.whymark --write
 `;
 
 function main() {
@@ -165,10 +165,10 @@ function main() {
       return;
     case "version":
     case "--version":
-      process.stdout.write(`crev ${pkgVersion()}\n`);
+      process.stdout.write(`whymark ${pkgVersion()}\n`);
       return;
     default:
-      fail(`Unknown command \`${args.command}\`. Run \`crev help\`.`);
+      fail(`Unknown command \`${args.command}\`. Run \`whymark help\`.`);
   }
 }
 
@@ -209,7 +209,7 @@ function buildDoc(args: Args) {
     context: contextFlag ? Number(contextFlag) : undefined,
     stubs,
     title: args.str("title"),
-    author: args.str("author") ?? process.env.CREV_AUTHOR,
+    author: args.str("author") ?? process.env.WHYMARK_AUTHOR,
     checks: args.all("check"),
   });
 
@@ -223,7 +223,7 @@ function buildDoc(args: Args) {
       untracked,
       stubs,
       title: args.str("title"),
-      author: args.str("author") ?? process.env.CREV_AUTHOR,
+      author: args.str("author") ?? process.env.WHYMARK_AUTHOR,
       checks: args.all("check"),
     });
   }
@@ -235,7 +235,7 @@ function cmdNew(args: Args) {
   const { doc, diff, cwd } = buildDoc(args);
   if (!diff.files.length) noChanges(doc.meta.scope);
 
-  const text = serializeCrev(doc);
+  const text = serializeWhymark(doc);
   const out = args.str("out", "o");
 
   if (out === "-") {
@@ -245,7 +245,7 @@ function cmdNew(args: Args) {
 
   const target = out
     ? resolve(cwd, out)
-    : resolve(cwd, "reviews", `${slug(doc.meta.title)}.crev`);
+    : resolve(cwd, "reviews", `${slug(doc.meta.title)}.whymark`);
   mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, text);
 
@@ -261,8 +261,8 @@ function cmdNew(args: Args) {
       `${c.bold("Next:")} fill in every ${c.cyan("why")}, ${c.cyan("source")} and ${c.cyan(
         "verify",
       )} field, then:`,
-      `  crev validate ${rel}`,
-      `  crev verify ${rel} --write`,
+      `  whymark validate ${rel}`,
+      `  whymark verify ${rel} --write`,
       "",
     ].join("\n"),
   );
@@ -282,15 +282,15 @@ function noChanges(scope: Scope | undefined): never {
 function cmdPrompt(args: Args) {
   const { doc, diff, cwd } = buildDoc(args);
   if (!diff.files.length) noChanges(doc.meta.scope);
-  const skeleton = serializeCrev(doc);
-  const templatePath = join(cwd, "prompts", "crev-author.md");
+  const skeleton = serializeWhymark(doc);
+  const templatePath = join(cwd, "prompts", "whymark-author.md");
   const template = existsSync(templatePath)
     ? stripPreamble(readFileSync(templatePath, "utf8"))
     : FALLBACK_PROMPT;
   process.stdout.write(
     template.replace("{{SKELETON}}", skeleton.trimEnd()).replace(
       "{{SPEC_PATH}}",
-      existsSync(join(cwd, "spec/crev-v1.md")) ? "spec/crev-v1.md" : "the CREV v1 spec",
+      existsSync(join(cwd, "spec/whymark-v1.md")) ? "spec/whymark-v1.md" : "the whymark v1 spec",
     ),
   );
 }
@@ -303,12 +303,12 @@ function stripPreamble(template: string): string {
   return separator === -1 ? template : lines.slice(separator + 1).join("\n").trimStart();
 }
 
-const FALLBACK_PROMPT = `Fill in this CREV review of your own changes. Replace every TODO.
+const FALLBACK_PROMPT = `Fill in this whymark review of your own changes. Replace every TODO.
 For each annotation give: why the code is that way, a \`source:\` for the evidence
 (use \`inference\` when there was none), and a \`verify:\` claim naming the exact
 command you ran. Do not narrate what the code does. Keep the diff bytes untouched.
 
-\`\`\`crev
+\`\`\`whymark
 {{SKELETON}}
 \`\`\`
 `;
@@ -316,12 +316,12 @@ command you ran. Do not narrate what the code does. Keep the diff bytes untouche
 function loadDoc(path: string) {
   if (!existsSync(path)) fail(`No such file: ${path}`);
   const text = readFileSync(path, "utf8");
-  return parseCrev(text, { filename: path });
+  return parseWhymark(text, { filename: path });
 }
 
 function cmdValidate(args: Args) {
   const paths = args.positionals;
-  if (!paths.length) fail("Usage: crev validate <file...>");
+  if (!paths.length) fail("Usage: whymark validate <file...>");
   const cwd = repoRoot() || process.cwd();
   const minCoverage = args.str("min-coverage");
   const json = args.has("json");
@@ -389,7 +389,7 @@ function bar(fraction: number, width = 16): string {
 
 function cmdVerify(args: Args) {
   const path = args.positionals[0];
-  if (!path) fail("Usage: crev verify <file> [--write]");
+  if (!path) fail("Usage: whymark verify <file> [--write]");
   const cwd = repoRoot() || process.cwd();
   const doc = loadDoc(path);
   const filter = args.str("filter");
@@ -420,7 +420,7 @@ function cmdVerify(args: Args) {
   }
 
   if (args.has("write")) {
-    writeFileSync(path, serializeCrev(doc));
+    writeFileSync(path, serializeWhymark(doc));
     if (!json) process.stdout.write(`${c.green("✓")} updated ${path} with real results\n`);
   }
 
@@ -445,7 +445,7 @@ function outcomeLabel(result: ClaimResult): string {
 
 function cmdStats(args: Args) {
   const path = args.positionals[0];
-  if (!path) fail("Usage: crev stats <file>");
+  if (!path) fail("Usage: whymark stats <file>");
   const doc = loadDoc(path);
   const stats = computeStats(doc);
   if (args.has("json")) {
@@ -496,9 +496,9 @@ function cmdStats(args: Args) {
 
 function cmdFmt(args: Args) {
   const path = args.positionals[0];
-  if (!path) fail("Usage: crev fmt <file> [--write]");
+  if (!path) fail("Usage: whymark fmt <file> [--write]");
   const doc = loadDoc(path);
-  const text = serializeCrev(doc);
+  const text = serializeWhymark(doc);
   if (args.has("write")) {
     writeFileSync(path, text);
     process.stdout.write(`${c.green("✓")} formatted ${path}\n`);
@@ -511,11 +511,11 @@ function cmdView() {
   const port = process.env.PORT ?? "43917";
   process.stdout.write(
     [
-      `${c.bold("crev viewer")}`,
+      `${c.bold("whymark viewer")}`,
       "",
       `  npm run dev            then open http://localhost:${port}`,
-      `  reviews/*.crev         every file in this directory is listed automatically`,
-      `  /inspect               paste a .crev file to render it without saving`,
+      `  reviews/*.whymark         every file in this directory is listed automatically`,
+      `  /inspect               paste a .whymark file to render it without saving`,
       "",
     ].join("\n"),
   );

@@ -1,7 +1,7 @@
 import {
   allNotes,
   isStub,
-  type CrevDocument,
+  type WhymarkDocument,
   type FileSection,
   type Note,
   type NoteKind,
@@ -83,7 +83,7 @@ export function addedLineNumbers(file: FileSection): number[] {
   return out;
 }
 
-export function computeStats(doc: CrevDocument): DocStats {
+export function computeStats(doc: WhymarkDocument): DocStats {
   const notes = allNotes(doc);
   const byKind = {} as Record<NoteKind, number>;
   const byRisk: Record<Risk, number> = { low: 0, medium: 0, high: 0 };

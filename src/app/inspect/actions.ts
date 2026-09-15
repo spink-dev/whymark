@@ -1,9 +1,9 @@
 "use server";
 
-import { parseCrev } from "@/lib/crev/parse";
-import { validateDocument } from "@/lib/crev/validate";
+import { parseWhymark } from "@/lib/whymark/parse";
+import { validateDocument } from "@/lib/whymark/validate";
 import { buildReviewVM, type ReviewVM } from "@/lib/view-model";
-import type { Diagnostic } from "@/lib/crev/types";
+import type { Diagnostic } from "@/lib/whymark/types";
 
 export interface RenderResult {
   review: ReviewVM;
@@ -12,7 +12,7 @@ export interface RenderResult {
 
 /** Renders a pasted document without writing it anywhere. */
 export async function renderPasted(text: string): Promise<RenderResult> {
-  const doc = parseCrev(text, { filename: "pasted.crev" });
+  const doc = parseWhymark(text, { filename: "pasted.whymark" });
   const validation = validateDocument(doc, { skipStaleness: true });
   return { review: await buildReviewVM(doc), issues: validation.diagnostics };
 }

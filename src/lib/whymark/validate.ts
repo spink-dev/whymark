@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { hashObject } from "./git";
 import { computeStats, hasPassingVerify, type DocStats } from "./stats";
-import { allNotes, isStub, type CrevDocument, type Diagnostic } from "./types";
+import { allNotes, isStub, type WhymarkDocument, type Diagnostic } from "./types";
 
 export interface ValidateOptions {
   /** Repo root used to resolve file paths for staleness checks. */
@@ -24,7 +24,7 @@ export interface ValidationResult {
 }
 
 export function validateDocument(
-  doc: CrevDocument,
+  doc: WhymarkDocument,
   options: ValidateOptions = {},
 ): ValidationResult {
   const diagnostics: Diagnostic[] = [...doc.diagnostics];

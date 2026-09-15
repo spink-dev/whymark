@@ -65,8 +65,8 @@ export function Tokens({
           className={cn(
             "rounded-[2px]",
             tone === "add"
-              ? "bg-[var(--crev-add-strong)]"
-              : "bg-[var(--crev-del-strong)]",
+              ? "bg-[var(--whymark-add-strong)]"
+              : "bg-[var(--whymark-del-strong)]",
           )}
         >
           {token.text.slice(localFrom, localTo)}

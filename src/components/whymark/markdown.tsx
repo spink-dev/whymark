@@ -32,7 +32,7 @@ function renderBlocks(text: string): ReactNode[] {
       out.push(
         <pre
           key={key++}
-          className="crev-scroll my-3 overflow-x-auto rounded-lg border border-border/60 bg-black/30 p-3 text-[12px] leading-relaxed"
+          className="whymark-scroll my-3 overflow-x-auto rounded-lg border border-border/60 bg-black/30 p-3 text-[12px] leading-relaxed"
         >
           <code data-lang={lang}>{body.join("\n")}</code>
         </pre>,
@@ -80,7 +80,7 @@ function renderBlocks(text: string): ReactNode[] {
       }
       const [head, ...body] = rows;
       out.push(
-        <div key={key++} className="crev-scroll my-4 overflow-x-auto">
+        <div key={key++} className="whymark-scroll my-4 overflow-x-auto">
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr>

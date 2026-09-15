@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Diagnostic, Note, NoteKind } from "@/lib/crev/types";
+import type { Diagnostic, Note, NoteKind } from "@/lib/whymark/types";
 import type { ReviewVM } from "@/lib/view-model";
 import { FilePanel, type ViewMode } from "./file-panel";
 import { KIND_META, STATUS_COLOR } from "./meta";
@@ -24,7 +24,7 @@ import { CoverageBar, Ring, Stat } from "./meters";
 import { Markdown } from "./markdown";
 import { NoteCard } from "./note-card";
 import { useMediaQuery } from "./use-media-query";
-import { hasPassingVerify } from "@/lib/crev/stats";
+import { hasPassingVerify } from "@/lib/whymark/stats";
 
 interface ReviewViewProps {
   review: ReviewVM;
@@ -82,8 +82,8 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
       setActiveNoteId(next.id);
       const element = document.getElementById(`note-${next.id}`);
       element?.scrollIntoView({ behavior: "smooth", block: "center" });
-      element?.classList.remove("crev-flash");
-      requestAnimationFrame(() => element?.classList.add("crev-flash"));
+      element?.classList.remove("whymark-flash");
+      requestAnimationFrame(() => element?.classList.add("whymark-flash"));
     },
     [orderedVisible, activeNoteId],
   );
@@ -215,10 +215,10 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
             )}
 
             {stale.length ? (
-              <div className="flex gap-2 rounded-lg border border-[color-mix(in_oklch,var(--crev-unknown)_40%,transparent)] bg-[color-mix(in_oklch,var(--crev-unknown)_10%,transparent)] p-2.5 text-[12.5px]">
+              <div className="flex gap-2 rounded-lg border border-[color-mix(in_oklch,var(--whymark-unknown)_40%,transparent)] bg-[color-mix(in_oklch,var(--whymark-unknown)_10%,transparent)] p-2.5 text-[12.5px]">
                 <AlertTriangle
                   className="mt-0.5 size-3.5 shrink-0"
-                  style={{ color: "var(--crev-unknown)" }}
+                  style={{ color: "var(--whymark-unknown)" }}
                 />
                 <div className="space-y-0.5">
                   <strong className="font-medium">
@@ -302,13 +302,13 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
               <Stat
                 label="inferred"
                 value={stats.inferenceOnly}
-                color="var(--crev-inference)"
+                color="var(--whymark-inference)"
                 hint="Annotations whose only provenance is the model's own inference"
               />
               <Stat
                 label="stubs"
                 value={stats.stubs}
-                color={stats.stubs ? "var(--crev-fail)" : undefined}
+                color={stats.stubs ? "var(--whymark-fail)" : undefined}
                 hint="Annotations still holding generated placeholder text"
               />
               <Stat
@@ -318,7 +318,7 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
                     ? `${stats.byRisk.high} (${stats.unverifiedHighRisk} unverified)`
                     : stats.byRisk.high
                 }
-                color={stats.unverifiedHighRisk ? "var(--crev-fail)" : undefined}
+                color={stats.unverifiedHighRisk ? "var(--whymark-fail)" : undefined}
               />
               <Stat label="todos" value={stats.openTodos} />
               <Stat label="questions" value={stats.openQuestions} />
@@ -363,8 +363,8 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
                     {file.path.split("/").slice(-2).join("/")}
                   </span>
                   <span className="shrink-0 font-mono text-[10.5px] tabular-nums text-muted-foreground">
-                    <span className="text-[color:var(--crev-add)]">+{file.added}</span>{" "}
-                    <span className="text-[color:var(--crev-del)]">−{file.removed}</span>
+                    <span className="text-[color:var(--whymark-add)]">+{file.added}</span>{" "}
+                    <span className="text-[color:var(--whymark-del)]">−{file.removed}</span>
                   </span>
                   <CoverageBar value={file.stats.coverage} width={40} />
                   <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
@@ -470,7 +470,7 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
         <footer className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/60 pt-4 text-[11.5px] text-muted-foreground">
           {slug ? (
             <>
-              <span className="font-mono">reviews/{slug}.crev</span>
+              <span className="font-mono">reviews/{slug}.whymark</span>
               <a
                 href={`/api/raw/${slug}`}
                 className="underline decoration-dotted underline-offset-2 hover:decoration-solid"
@@ -479,13 +479,13 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
               </a>
               <span>
                 re-check every claim with{" "}
-                <code className="font-mono">crev verify reviews/{slug}.crev</code>
+                <code className="font-mono">whymark verify reviews/{slug}.whymark</code>
               </span>
             </>
           ) : (
             <span>
               Pasted document — save it under <code className="font-mono">reviews/</code> to
-              keep it, then <code className="font-mono">crev verify</code> its claims.
+              keep it, then <code className="font-mono">whymark verify</code> its claims.
             </span>
           )}
         </footer>

@@ -1,7 +1,7 @@
-import { buildRows } from "@/lib/crev/align";
-import { languageFor } from "@/lib/crev/lang";
-import { computeStats, type FileStats } from "@/lib/crev/stats";
-import type { CrevDocument, FileSection, Meta, Note } from "@/lib/crev/types";
+import { buildRows } from "@/lib/whymark/align";
+import { languageFor } from "@/lib/whymark/lang";
+import { computeStats, type FileStats } from "@/lib/whymark/stats";
+import type { WhymarkDocument, FileSection, Meta, Note } from "@/lib/whymark/types";
 import { highlightFile, type Token } from "@/lib/highlight";
 
 export interface RowVM {
@@ -36,10 +36,10 @@ export interface ReviewVM {
   files: FileVM[];
   docNotes: Note[];
   stats: ReturnType<typeof computeStats>;
-  diagnostics: CrevDocument["diagnostics"];
+  diagnostics: WhymarkDocument["diagnostics"];
 }
 
-export async function buildReviewVM(doc: CrevDocument): Promise<ReviewVM> {
+export async function buildReviewVM(doc: WhymarkDocument): Promise<ReviewVM> {
   const stats = computeStats(doc);
   const files: FileVM[] = [];
 

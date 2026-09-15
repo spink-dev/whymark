@@ -1,18 +1,24 @@
 ---
-crev: 1
-title: Fix five papercuts found by running crev on crev
+whymark: 1
+title: Fix five papercuts found by running the tool on itself
 author: claude-opus-5 (cursor cloud agent)
 date: 2026-09-15T12:37:12Z
 scope: commit
 base: HEAD^@f77caf8
 head: HEAD@77c6208
-repo: crev
+repo: whymark
 tags:
   - dogfooding
   - cli
+  - pre-rename
 summary: |
   Five unrelated small fixes, all found by using this tool on its own output
   rather than by reading the code again.
+
+  This review predates the rename to whymark, and the diff below is left as it
+  was recorded: the modules appear at their old paths under `src/lib/crev/`, and
+  the blob hashes pin to the commit as it was made. Rewriting a diff to match a
+  later name would break the one property that makes a review worth reading.
 
   Writing the first example review surfaced two output bugs: a plain modified
   file was serialised with `from=<same path>`, which made a round-trip through

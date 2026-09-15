@@ -11,8 +11,8 @@ import {
 } from "react";
 import { FileDiff, FilePlus2, FileMinus2, FileSymlink, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { layoutRail, type Anchor } from "@/lib/crev/align";
-import type { Note } from "@/lib/crev/types";
+import { layoutRail, type Anchor } from "@/lib/whymark/align";
+import type { Note } from "@/lib/whymark/types";
 import type { FileVM, RowVM } from "@/lib/view-model";
 import { KIND_META } from "./meta";
 import { NoteCard } from "./note-card";
@@ -137,8 +137,8 @@ export function FilePanel({
           <span className="break-all">{file.path}</span>
         </h3>
         <span className="font-mono text-[11px] tabular-nums">
-          <span className="text-[color:var(--crev-add)]">+{file.added}</span>{" "}
-          <span className="text-[color:var(--crev-del)]">−{file.removed}</span>
+          <span className="text-[color:var(--whymark-add)]">+{file.added}</span>{" "}
+          <span className="text-[color:var(--whymark-del)]">−{file.removed}</span>
         </span>
         <span className="ml-auto flex items-center gap-3">
           <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -184,13 +184,13 @@ export function FilePanel({
             gridTemplateColumns: `minmax(0,1fr) ${GUTTER}px minmax(300px, 25vw)`,
           }}
         >
-          <div className="crev-scroll overflow-x-auto border-r border-border/40">
-            <div className="crev-code w-max min-w-full">
+          <div className="whymark-scroll overflow-x-auto border-r border-border/40">
+            <div className="whymark-code w-max min-w-full">
               {rows.map((row, rowIndex) => {
                 const pad = padding.get(rowIndex);
                 return (
                   <Fragment key={row.key}>
-                    {pad ? <div className="crev-gap" style={{ height: pad }} aria-hidden /> : null}
+                    {pad ? <div className="whymark-gap" style={{ height: pad }} aria-hidden /> : null}
                     <CodeRow
                       row={row}
                       mode={mode}
@@ -275,7 +275,7 @@ function CodeRow({
 
   if (row.kind === "hunk") {
     return (
-      <div className="crev-row flex items-center gap-2 border-y border-border/40 bg-foreground/[0.04] px-2 text-[11px] text-muted-foreground">
+      <div className="whymark-row flex items-center gap-2 border-y border-border/40 bg-foreground/[0.04] px-2 text-[11px] text-muted-foreground">
         <span className="font-mono">{row.text}</span>
         {row.label ? <span className="truncate opacity-70">{row.label}</span> : null}
       </div>
@@ -292,15 +292,15 @@ function CodeRow({
 
   const marker =
     row.kind === "add"
-      ? { sign: "+", bg: "var(--crev-add-bg)" }
+      ? { sign: "+", bg: "var(--whymark-add-bg)" }
       : row.kind === "del"
-        ? { sign: "−", bg: "var(--crev-del-bg)" }
+        ? { sign: "−", bg: "var(--whymark-del-bg)" }
         : { sign: " ", bg: undefined };
 
   if (mode === "split") {
     return (
       <div
-        className={cn("crev-row flex", covered && "cursor-pointer")}
+        className={cn("whymark-row flex", covered && "cursor-pointer")}
         data-notes={row.noteIds.join(" ") || undefined}
         onMouseEnter={onEnter}
         onMouseLeave={onLeave}
@@ -326,7 +326,7 @@ function CodeRow({
 
   return (
     <div
-      className={cn("crev-row flex", covered && "cursor-pointer")}
+      className={cn("whymark-row flex", covered && "cursor-pointer")}
       data-notes={row.noteIds.join(" ") || undefined}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
@@ -338,10 +338,10 @@ function CodeRow({
             : marker.bg,
       }}
     >
-      <span className="crev-gutter w-11 shrink-0 pr-2 text-right text-[11px] tabular-nums">
+      <span className="whymark-gutter w-11 shrink-0 pr-2 text-right text-[11px] tabular-nums">
         {line.oldLine ?? ""}
       </span>
-      <span className="crev-gutter w-11 shrink-0 pr-2 text-right text-[11px] tabular-nums">
+      <span className="whymark-gutter w-11 shrink-0 pr-2 text-right text-[11px] tabular-nums">
         {line.newLine ?? ""}
       </span>
       <span
@@ -352,9 +352,9 @@ function CodeRow({
         className={cn(
           "w-4 shrink-0 pl-1 text-center",
           row.kind === "add"
-            ? "text-[color:var(--crev-add)]"
+            ? "text-[color:var(--whymark-add)]"
             : row.kind === "del"
-              ? "text-[color:var(--crev-del)]"
+              ? "text-[color:var(--whymark-del)]"
               : "text-transparent",
         )}
       >
@@ -375,7 +375,7 @@ function SplitCell({ cell, side }: { cell?: RowVM | null; side: "add" | "del" })
   if (!cell) {
     return (
       <span className="flex min-w-0 flex-1 bg-foreground/[0.02]">
-        <span className="crev-gutter w-11 shrink-0" />
+        <span className="whymark-gutter w-11 shrink-0" />
       </span>
     );
   }
@@ -386,12 +386,12 @@ function SplitCell({ cell, side }: { cell?: RowVM | null; side: "add" | "del" })
       style={{
         backgroundColor: changed
           ? side === "add"
-            ? "var(--crev-add-bg)"
-            : "var(--crev-del-bg)"
+            ? "var(--whymark-add-bg)"
+            : "var(--whymark-del-bg)"
           : undefined,
       }}
     >
-      <span className="crev-gutter w-11 shrink-0 pr-2 text-right text-[11px] tabular-nums">
+      <span className="whymark-gutter w-11 shrink-0 pr-2 text-right text-[11px] tabular-nums">
         {side === "add" ? (cell.newLine ?? "") : (cell.oldLine ?? "")}
       </span>
       <span
@@ -399,8 +399,8 @@ function SplitCell({ cell, side }: { cell?: RowVM | null; side: "add" | "del" })
           "w-4 shrink-0 text-center",
           changed
             ? side === "add"
-              ? "text-[color:var(--crev-add)]"
-              : "text-[color:var(--crev-del)]"
+              ? "text-[color:var(--whymark-add)]"
+              : "text-[color:var(--whymark-del)]"
             : "text-transparent",
         )}
       >
@@ -521,8 +521,8 @@ function CompactBody({
     <div>
       {groups.map((group, index) => (
         <div key={index}>
-          <div className="crev-scroll overflow-x-auto">
-            <div className="crev-code w-max min-w-full">
+          <div className="whymark-scroll overflow-x-auto">
+            <div className="whymark-code w-max min-w-full">
               {group.rows.map((row) => (
                 <CodeRow
                   key={row.key}

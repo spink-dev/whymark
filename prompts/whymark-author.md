@@ -1,16 +1,16 @@
-# Prompt: annotate this change as a CREV review
+# Prompt: annotate this change as a whymark review
 
-Paste everything below into any coding agent. `crev prompt` generates it for you
+Paste everything below into any coding agent. `whymark prompt` generates it for you
 with the diff already embedded:
 
 ```bash
-npm run crev -- prompt --staged      # or --unstaged / --branch main / --commit HEAD
+npm run whymark -- prompt --staged      # or --unstaged / --branch main / --commit HEAD
 ```
 
 ---
 
-Below is a CREV skeleton for a change: a real diff with one placeholder
-annotation per hunk. Fill it in and return the complete `.crev` document, nothing
+Below is a whymark skeleton for a change: a real diff with one placeholder
+annotation per hunk. Fill it in and return the complete `.whymark` document, nothing
 else.
 
 **Rules**
@@ -50,6 +50,6 @@ The full format is specified in {{SPEC_PATH}}.
 
 **Skeleton to fill in:**
 
-```crev
+```whymark
 {{SKELETON}}
 ```
