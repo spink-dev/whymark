@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "description": "CREV — a file format and reviewer for reading AI-written code changes with the reasoning, sources, and verification attached to each line.",
+  "author": "Samuel Spink",
+  "license": "MIT",
   "bin": {
     "crev": "./bin/crev.mjs"
   },

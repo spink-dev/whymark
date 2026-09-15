@@ -195,3 +195,20 @@ code they explain, that none overlap, and that each control responds.
 
 The format is versioned: every document declares `crev: 1`, and a parser warns
 rather than fails when it meets a version it does not implement.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how changes get reviewed here.
+
+## Licence and provenance
+
+MIT, plus an AI-Led Development Acknowledgement — see [LICENSE](LICENSE).
+
+AI agents wrote most of this code, directed by a human, and every change is read
+by at least one human before it merges. That review is the only assurance
+offered: nothing here has been audited, formally verified, or reviewed by a
+domain expert, and no liability is accepted for the code or for any claim
+recorded in a review inside it. The acknowledgement adds no conditions to MIT
+and takes none of its permissions away.
+
+Stating this in the licence is the same argument the format makes. A reader
+deciding whether to trust code is better served by knowing how it was produced
+and where the review stopped than by an unqualified assurance.
