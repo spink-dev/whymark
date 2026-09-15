@@ -190,7 +190,7 @@ export function FilePanel({
                 const pad = padding.get(rowIndex);
                 return (
                   <Fragment key={row.key}>
-                    {pad ? <div style={{ height: pad }} aria-hidden /> : null}
+                    {pad ? <div className="crev-gap" style={{ height: pad }} aria-hidden /> : null}
                     <CodeRow
                       row={row}
                       mode={mode}

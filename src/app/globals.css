@@ -183,6 +183,22 @@
   user-select: none;
 }
 
+/*
+ * Space held open in the code column so a tall annotation can stay level with
+ * the lines it describes. The dashed rule continues the gutter edge through the
+ * gap, so it reads as deliberate rather than as a hole in the diff.
+ */
+.crev-gap {
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--muted-foreground) 45%, transparent) 0 3px,
+    transparent 3px 8px
+  );
+  background-position: 44px 0;
+  background-repeat: repeat-y;
+  background-size: 1px 8px;
+}
+
 .crev-scroll::-webkit-scrollbar {
   height: 10px;
   width: 10px;
