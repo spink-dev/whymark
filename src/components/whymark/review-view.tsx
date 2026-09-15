@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import type { Diagnostic, Note, NoteKind } from "@/lib/whymark/types";
 import type { ReviewVM } from "@/lib/view-model";
 import { FilePanel, type ViewMode } from "./file-panel";
-import { ApplyBar } from "./decide";
+import { ApplyControls, ApplyResult } from "./decide";
 import { applyFileDecisions, saveEditedRange } from "@/app/r/[slug]/actions";
 import { isEmpty, summarize, type FileDecisions } from "@/lib/whymark/edit";
 import { KIND_META, STATUS_COLOR } from "./meta";
@@ -235,6 +235,13 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
           </span>
         </div>
 
+        <ApplyControls
+          summary={summarize(decisions)}
+          busy={applying}
+          onApply={apply}
+          onReset={() => setDecisions({})}
+        />
+
         <div className="flex items-center gap-1 rounded-md border border-border/70 p-0.5">
           <button
             onClick={() => setMode("unified")}
@@ -273,6 +280,7 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
         </button>
       </header>
 
+      <ApplyResult result={applyResult} onDismiss={() => setApplyResult(null)} />
       <div className="mx-auto max-w-[1800px] px-4 py-5">
         {/* overview */}
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -568,15 +576,6 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
           )}
         </footer>
       </div>
-
-      <ApplyBar
-        summary={summarize(decisions)}
-        busy={applying}
-        result={applyResult}
-        onApply={apply}
-        onReset={() => setDecisions({})}
-        onDismiss={() => setApplyResult(null)}
-      />
 
       {showHelp ? <HelpOverlay onClose={() => setShowHelp(false)} /> : null}
     </div>

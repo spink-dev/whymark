@@ -232,80 +232,101 @@ export interface ApplySummary {
   restored: number;
 }
 
-/** The bar that appears once there is something to apply. */
-export function ApplyBar({
+/**
+ * Pending decisions live in the toolbar, not in a bar pinned to the bottom of
+ * the window: a browser window taller than the screen puts a bottom-fixed bar
+ * out of sight, and the reviewer never learns there is anything to apply.
+ */
+export function ApplyControls({
   summary,
   busy,
-  result,
   onApply,
   onReset,
-  onDismiss,
 }: {
   summary: ApplySummary;
   busy: boolean;
-  result: { ok: boolean; message: string } | null;
   onApply: () => void;
   onReset: () => void;
-  onDismiss: () => void;
 }) {
-  const pending = summary.discarded + summary.restored > 0;
-  if (!pending && !result) return null;
+  if (summary.discarded + summary.restored === 0) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-4">
-      <div className="pointer-events-auto flex max-w-3xl flex-wrap items-center gap-3 rounded-xl border border-border/70 bg-[color-mix(in_oklch,var(--card)_92%,var(--background))] px-3.5 py-2.5 shadow-lg backdrop-blur">
-        {result ? (
-          <>
-            {result.ok ? (
-              <Check
-                className="size-3.5 shrink-0"
-                style={{ color: "var(--whymark-add)" }}
-              />
-            ) : (
-              <TriangleAlert
-                className="size-3.5 shrink-0"
-                style={{ color: "var(--whymark-del)" }}
-              />
-            )}
-            <p className="text-[12.5px] leading-relaxed">{result.message}</p>
-            <button
-              type="button"
-              onClick={onDismiss}
-              className="ml-auto rounded-md border border-border/70 px-2 py-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
-            >
-              dismiss
-            </button>
-          </>
-        ) : (
-          <>
-            <span className="text-[12.5px]">
-              {describe(summary)} in{" "}
-              {summary.files === 1 ? "1 file" : `${summary.files} files`}
-            </span>
-            <span className="text-[11.5px] text-muted-foreground">
-              writes to your working tree
-            </span>
-            <span className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onReset}
-                className="rounded-md border border-border/70 px-2 py-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
-              >
-                reset
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={onApply}
-                className="flex items-center gap-1.5 rounded-md bg-foreground px-2.5 py-1 text-[12.5px] font-medium text-background transition-opacity disabled:opacity-50"
-              >
-                {busy ? <Loader2 className="size-3 animate-spin" /> : null}
-                apply
-              </button>
-            </span>
-          </>
-        )}
-      </div>
+    <div
+      className="flex shrink-0 items-center gap-2 rounded-md border px-2 py-1"
+      style={{
+        borderColor: "color-mix(in oklch, var(--whymark-del) 40%, transparent)",
+        backgroundColor: "color-mix(in oklch, var(--whymark-del) 8%, transparent)",
+      }}
+    >
+      <span className="hidden text-[11.5px] lg:inline" title="writes to your working tree">
+        {describe(summary)}
+      </span>
+      <span className="text-[11.5px] lg:hidden">
+        {summary.discarded + summary.restored} to undo
+      </span>
+      <button
+        type="button"
+        onClick={onReset}
+        className="rounded px-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        reset
+      </button>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={onApply}
+        className="flex items-center gap-1.5 rounded bg-foreground px-2 py-0.5 text-[11.5px] font-medium text-background transition-opacity disabled:opacity-50"
+        title="Write these decisions to the files in your working tree"
+      >
+        {busy ? <Loader2 className="size-3 animate-spin" /> : null}
+        apply
+      </button>
+    </div>
+  );
+}
+
+/** What happened on disk, directly under the toolbar so it cannot be missed. */
+export function ApplyResult({
+  result,
+  onDismiss,
+}: {
+  result: { ok: boolean; message: string } | null;
+  onDismiss: () => void;
+}) {
+  if (!result) return null;
+
+  // Floated below the toolbar rather than placed in the flow: a strip of its own
+  // would either scroll out of reach or fight the sticky file headers for the
+  // same 56px of screen.
+  return (
+    <div
+      role="status"
+      className="fixed right-4 top-[68px] z-40 flex max-w-md items-start gap-2 rounded-lg border px-3 py-2 shadow-lg backdrop-blur"
+      style={{
+        borderColor: `color-mix(in oklch, ${
+          result.ok ? "var(--whymark-add)" : "var(--whymark-del)"
+        } 45%, transparent)`,
+        backgroundColor: `color-mix(in oklch, ${
+          result.ok ? "var(--whymark-add)" : "var(--whymark-del)"
+        } 14%, var(--card))`,
+      }}
+    >
+      {result.ok ? (
+        <Check className="mt-0.5 size-3.5 shrink-0" style={{ color: "var(--whymark-add)" }} />
+      ) : (
+        <TriangleAlert
+          className="mt-0.5 size-3.5 shrink-0"
+          style={{ color: "var(--whymark-del)" }}
+        />
+      )}
+      <p className="text-[12.5px] leading-relaxed">{result.message}</p>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="ml-auto shrink-0 rounded border border-border/70 px-2 py-0.5 text-[11.5px] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        dismiss
+      </button>
     </div>
   );
 }

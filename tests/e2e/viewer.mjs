@@ -301,10 +301,24 @@ if (gitDirty()) {
   if (hasControl) {
     await control.click();
     await page.waitForTimeout(400);
-    const marked = await page.evaluate(() =>
-      document.body.innerText.includes("writes to your working tree"),
+    // The control belongs in the toolbar: a bar pinned to the bottom of the
+    // window is invisible when the window is taller than the screen.
+    const marked = await page.evaluate(() => {
+      const button = [...document.querySelectorAll("header.sticky.top-0 button")].find(
+        (candidate) => candidate.textContent?.trim() === "apply",
+      );
+      if (!button) return null;
+      const box = button.getBoundingClientRect();
+      return {
+        inToolbar: box.top >= 0 && box.bottom <= 56,
+        summary: document.body.innerText.includes("discard 1 added line"),
+      };
+    });
+    check(
+      "decide flow: a decision puts an apply control in the toolbar",
+      Boolean(marked?.inToolbar && marked.summary),
+      JSON.stringify(marked),
     );
-    check("decide flow: a decision raises the apply bar", marked);
     await page.screenshot({ path: `${OUT}/pw-08-decide.png` });
 
     await page.getByRole("button", { name: /^apply$/i }).click();
