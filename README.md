@@ -184,7 +184,14 @@ npm test           # vitest
 npm run typecheck
 npm run lint
 npm run build
+npm run test:ui    # interaction checks, against a running npm run dev
 ```
+
+`test:ui` drives a real browser because the viewer has a failure mode that looks
+fine in a screenshot: if the client bundle does not load, the page still renders
+every card in its server-computed position while the toggles, filters, and
+keyboard shortcuts silently do nothing. It asserts that cards line up with the
+code they explain, that none overlap, and that each control responds.
 
 The format is versioned: every document declares `crev: 1`, and a parser warns
 rather than fails when it meets a version it does not implement.
