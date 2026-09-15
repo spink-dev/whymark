@@ -124,7 +124,9 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
     .filter(([, count]) => count > 0)
     .sort((a, b) => b[1] - a[1]) as Array<[NoteKind, number]>;
 
-  const stale = issues.filter((issue) => issue.code === "review-stale");
+  const stale = issues.filter(
+    (issue) => issue.code === "review-stale" || issue.code === "file-missing",
+  );
   const problems = issues.filter(
     (issue) => issue.level === "error" || issue.code === "note-stub",
   );
@@ -218,11 +220,18 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
                   className="mt-0.5 size-3.5 shrink-0"
                   style={{ color: "var(--crev-unknown)" }}
                 />
-                <div>
-                  <strong className="font-medium">The code moved on.</strong>{" "}
-                  {stale.length === 1
-                    ? stale[0].message
-                    : `${stale.length} files changed since this review was written, so its annotations may no longer match.`}
+                <div className="space-y-0.5">
+                  <strong className="font-medium">
+                    {stale.every((issue) => issue.code === "file-missing")
+                      ? "This review describes code that is not in the working tree."
+                      : "The code moved on since this review was written."}
+                  </strong>
+                  <ul className="space-y-0.5 text-muted-foreground">
+                    {stale.slice(0, 4).map((issue, index) => (
+                      <li key={index}>{issue.message}</li>
+                    ))}
+                    {stale.length > 4 ? <li>and {stale.length - 4} more.</li> : null}
+                  </ul>
                 </div>
               </div>
             ) : null}

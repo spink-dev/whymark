@@ -270,6 +270,11 @@ Repeatable fields (`source`, `verify`, `alt`, `todo`, `question`, `ref`) may
 appear many times in one annotation. A value continues onto following lines
 while they are indented by at least two spaces.
 
+A field is `name:` followed by whitespace, or — for the field names in the table
+below only — `name:` with no space at all, since `why:text` is a natural thing to
+write. Restricting the tight form to known names keeps a body line that starts
+with `https://…` from parsing as a field called `https`.
+
 | Field | Repeat | Meaning |
 | --- | --- | --- |
 | `why` | – | Why the code is the way it is. The most important field. |
@@ -371,11 +376,29 @@ Tools compute these; they are never stored in the file.
 
 ---
 
-## 7. Conformance
+## 7. Error recovery
+
+The format is written by language models, so a parser must lose nothing when a
+document is slightly wrong. Required recoveries, each reported as a warning:
+
+| Input | Behaviour |
+| --- | --- |
+| Hunk counts disagree with the body | Read until the next directive; keep the lines |
+| Selector partly outside the diff | Keep the annotation, warn; error only if *no* named line exists |
+| `risk: if the CDN rule is removed…` — prose where a fixed value belongs | Keep the text as a plain field. Never drop it |
+| A field after the free-form body | Resume field parsing at any documented field name |
+| Blank line inside a hunk | Empty context line; trailing ones dropped at the hunk's end |
+| Unknown `kind`, `risk`, or field name | Keep the value, warn, treat kind as `note` |
+| Duplicate annotation `id` | Rename the later one |
+| No frontmatter, or no `crev:`/`title:` | Report an error but still parse the body |
+
+Dropping content silently is the one unacceptable outcome: a reviewer cannot
+notice a sentence that was never displayed.
+
+## 8. Conformance
 
 A **parser** must accept every example in this document, address annotations by
-line number, and recover from a bad hunk count with a warning rather than an
-error.
+line number, and perform every recovery in §7.
 
 A **writer** must emit `crev: 1` and `title`, must not emit an annotation whose
 selector names lines absent from the diff, and should emit `newsha` for every
@@ -387,7 +410,7 @@ must distinguish the verification statuses from each other, and must show
 
 ---
 
-## 8. Design notes
+## 9. Design notes
 
 **Why line numbers instead of inline annotation?** An inline format (a trailing
 `|| comment` on each line) forces the writer to align columns and to fragment a
