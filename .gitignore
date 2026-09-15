@@ -42,3 +42,6 @@ next-env.d.ts
 
 # agent artifacts
 /.artifacts/
+
+# downloadable snapshots of this repo, served by the dev server
+/public/*.zip
