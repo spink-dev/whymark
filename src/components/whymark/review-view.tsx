@@ -19,6 +19,9 @@ import { cn } from "@/lib/utils";
 import type { Diagnostic, Note, NoteKind } from "@/lib/whymark/types";
 import type { ReviewVM } from "@/lib/view-model";
 import { FilePanel, type ViewMode } from "./file-panel";
+import { ApplyBar } from "./decide";
+import { applyFileDecisions, saveEditedRange } from "@/app/r/[slug]/actions";
+import { isEmpty, summarize, type FileDecisions } from "@/lib/whymark/edit";
 import { KIND_META, STATUS_COLOR } from "./meta";
 import { CoverageBar, Ring, Stat } from "./meters";
 import { Markdown } from "./markdown";
@@ -41,6 +44,11 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
   const [onlyUnverified, setOnlyUnverified] = useState(false);
   const [onlyInference, setOnlyInference] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [decisions, setDecisions] = useState<Record<string, FileDecisions>>({});
+  const [applying, setApplying] = useState(false);
+  const [applyResult, setApplyResult] = useState<{ ok: boolean; message: string } | null>(
+    null,
+  );
 
   const allNotes = useMemo(
     () => [...review.docNotes, ...review.files.flatMap((f) => f.notes)],
@@ -86,6 +94,72 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
       requestAnimationFrame(() => element?.classList.add("whymark-flash"));
     },
     [orderedVisible, activeNoteId],
+  );
+
+  const setFileDecisions = useCallback((path: string, next: FileDecisions) => {
+    setApplyResult(null);
+    setDecisions((current) => {
+      const updated = { ...current, [path]: next };
+      if (isEmpty(next)) delete updated[path];
+      return updated;
+    });
+  }, []);
+
+  /**
+   * Writing happens one file at a time so a failure on the third file leaves a
+   * message naming it, rather than an all-or-nothing result the reviewer cannot
+   * act on. Each file's own hash is re-checked server-side before it is written.
+   */
+  const apply = useCallback(async () => {
+    if (!slug) return;
+    setApplying(true);
+    const failures: string[] = [];
+    let discarded = 0;
+    let restored = 0;
+
+    for (const [path, fileDecisions] of Object.entries(decisions)) {
+      const result = await applyFileDecisions(slug, path, fileDecisions);
+      if (result.ok) {
+        discarded += result.discarded ?? 0;
+        restored += result.restored ?? 0;
+      } else {
+        failures.push(result.error ?? `${path} could not be written.`);
+      }
+    }
+
+    setApplying(false);
+    if (failures.length) {
+      setApplyResult({ ok: false, message: failures.join(" ") });
+      return;
+    }
+    setDecisions({});
+    const undone = [
+      discarded ? `${discarded} added ${discarded === 1 ? "line" : "lines"} dropped` : "",
+      restored
+        ? `${restored} removed ${restored === 1 ? "line" : "lines"} restored`
+        : "",
+    ]
+      .filter(Boolean)
+      .join(", ");
+    setApplyResult({
+      ok: true,
+      message: `Working tree updated: ${undone}. This review now describes code you changed — regenerate it with \`whymark new --worktree\` before sharing.`,
+    });
+  }, [decisions, slug]);
+
+  const onSaveEdit = useCallback(
+    async (path: string, start: number, end: number, text: string) => {
+      if (!slug) return { ok: false, error: "A pasted review has no file to write to." };
+      const result = await saveEditedRange(slug, path, start, end, text);
+      if (result.ok) {
+        setApplyResult({
+          ok: true,
+          message: `Saved your edit to ${path}. Regenerate the review so its diff matches the file again.`,
+        });
+      }
+      return result;
+    },
+    [slug],
   );
 
   useEffect(() => {
@@ -463,6 +537,10 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
               visibleNoteIds={visibleNoteIds}
               activeNoteId={activeNoteId}
               onActivate={setActiveNoteId}
+              editable={Boolean(slug)}
+              decisions={decisions[file.path]}
+              onDecisions={setFileDecisions}
+              onSaveEdit={onSaveEdit}
             />
           ))}
         </div>
@@ -490,6 +568,15 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
           )}
         </footer>
       </div>
+
+      <ApplyBar
+        summary={summarize(decisions)}
+        busy={applying}
+        result={applyResult}
+        onApply={apply}
+        onReset={() => setDecisions({})}
+        onDismiss={() => setApplyResult(null)}
+      />
 
       {showHelp ? <HelpOverlay onClose={() => setShowHelp(false)} /> : null}
     </div>

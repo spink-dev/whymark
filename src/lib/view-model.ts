@@ -1,4 +1,6 @@
 import { buildRows } from "@/lib/whymark/align";
+import { isActionable } from "@/lib/whymark/edit";
+import { hashObject } from "@/lib/whymark/git";
 import { languageFor } from "@/lib/whymark/lang";
 import { computeStats, type FileStats } from "@/lib/whymark/stats";
 import type { WhymarkDocument, FileSection, Meta, Note } from "@/lib/whymark/types";
@@ -26,6 +28,8 @@ export interface FileVM {
   lang: string;
   newSha?: string;
   binary: boolean;
+  /** The file still matches this review, so a reviewer's decisions can be written to it. */
+  actionable: boolean;
   rows: RowVM[];
   notes: Note[];
   stats: FileStats;
@@ -88,6 +92,7 @@ export async function buildReviewVM(doc: WhymarkDocument): Promise<ReviewVM> {
       lang: languageFor(file.path, file.lang),
       newSha: file.newSha,
       binary: file.binary,
+      actionable: isActionable(file, hashObject(file.path, process.cwd())),
       rows: vmRows,
       notes: file.notes,
       stats: stats.perFile[index],

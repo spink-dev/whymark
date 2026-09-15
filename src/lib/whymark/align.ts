@@ -238,17 +238,22 @@ export function layoutRail(
   const padding = new Map<number, number>();
   let shift = 0;
   let cursor = -Infinity;
+  let lastRow = -1;
 
   for (const anchor of anchors) {
     const lineTop = anchor.startRow * lineHeight + shift;
     const top = Math.max(lineTop, cursor + gap);
-    const pad = top - lineTop;
+    // Padding above a row moves that row down, so it can only be opened for the
+    // first card on a row. Opening it for a second card on the same row would
+    // shove the row away from the first card, which is already placed.
+    const pad = anchor.startRow === lastRow ? 0 : top - lineTop;
     if (pad > 0.5) {
       padding.set(anchor.startRow, (padding.get(anchor.startRow) ?? 0) + pad);
       shift += pad;
     }
     tops.set(anchor.noteId, top);
     cursor = top + measure(anchor.noteId);
+    lastRow = anchor.startRow;
   }
 
   const offsets: number[] = [];
