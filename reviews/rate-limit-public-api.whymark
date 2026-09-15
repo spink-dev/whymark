@@ -43,10 +43,11 @@ source: prompt:"cap the search endpoint, partners are hammering it" — the
 source: file:docs/partners.md:44 — the largest documented partner contract is
   60 requests a minute, so 100 leaves headroom
 verify: none => unknown (no load test against production traffic shapes)
-todo: log limiter rejections for a week before enforcing, if you want a safer rollout
+todo: log limiter rejections for a week before enforcing, if you want a safer
+  rollout
 
-@file src/lib/rate-limit.ts added +34 newsha=1a9c4e2
-@@ -0,0 +1,34 @@
+@file src/lib/rate-limit.ts added +35 newsha=1a9c4e2
+@@ -0,0 +1,35 @@
 +import { redis } from "@/lib/redis";
 +
 +export interface Decision {
@@ -100,11 +101,12 @@ verify: review => pass
 @note +25..31 kind=intent confidence=0.85
 why: `remaining` is clamped at zero because `INCR` keeps counting past the
   limit; without the clamp a blocked client would see a negative number in the
-  header. `resetSeconds` is derived from the wall clock rather than Redis TTL to
-  avoid a second round trip.
+  header. `resetSeconds` is derived from the wall clock rather than Redis TTL
+  to avoid a second round trip.
 source: file:src/app/api/search/route.ts:21 — the only consumer, which puts
   both values in the 429 response
-verify: cmd `npm test -- rate-limit` => pass (asserts remaining never goes below 0)
+verify: cmd `npm test -- rate-limit` => pass (asserts remaining never goes
+  below 0)
 alt: `TTL bucket` for the reset value — rejected, it costs another round trip
   for a number the process can already compute
 
@@ -131,8 +133,8 @@ verify: cmd `npm test -- rate-limit` => pass (11 tests)
 verify: type => pass
 alt: sliding window log — rejected, it needs one sorted-set entry per request,
   which is far more memory for a limit this coarse
-alt: token bucket in process memory — rejected, four instances would each allow
-  the full 100
+alt: token bucket in process memory — rejected, four instances would each
+  allow the full 100
 
 The known cost of a fixed window is burstiness at the boundary: a client can
 send 100 requests at 11:59:59 and 100 more at 12:00:00. For protecting a read
@@ -142,12 +144,13 @@ replica that is acceptable; for billing it would not be.
 why: `EXPIRE` is issued on every request rather than only on creation, so a
   long-running window keeps having its TTL reset to a full 60 seconds.
 source: inference — I could not find a codebase convention for this, and the
-  Redis docs do not say EXPIRE-on-every-INCR is wrong, only that it is redundant
-verify: cmd `npm test -- rate-limit` => pass (the test asserts the window resets
-  at 60s, which passes because the clock is faked)
+  Redis docs do not say EXPIRE-on-every-INCR is wrong, only that it is
+  redundant
+verify: cmd `npm test -- rate-limit` => pass (the test asserts the window
+  resets at 60s, which passes because the clock is faked)
+todo: confirm against a real Redis before this ships
 question: is refreshing the TTL on every hit acceptable, or should this be
   `SET key 1 EX 60 NX` followed by `INCR`?
-todo: confirm against a real Redis before this ships
 
 @note +32..34 kind=test confidence=0.9
 why: `bucketFor` exists only so the test can compute the same key the limiter
@@ -155,7 +158,7 @@ why: `bucketFor` exists only so the test can compute the same key the limiter
 source: test:tests/rate-limit.test.ts:14 — the only caller
 verify: cmd `npm test -- rate-limit` => pass
 
-@file src/app/api/search/route.ts modified +13 -2 newsha=7b3d5f8
+@file src/app/api/search/route.ts modified +14 -2 newsha=7b3d5f8
 @@ -1,9 +1,14 @@
  import { NextResponse } from "next/server";
  import { search } from "@/lib/search";
@@ -192,7 +195,8 @@ source: file:infra/cdn.tf:88 — the CDN rule caps anonymous search at 20/min/IP
 source: prompt:"partners are hammering it" — the reported problem is keyed
   traffic, not anonymous
 verify: cmd `npm test -- rate-limit` => pass (covers the missing-key path)
-verify: manual "101st keyed request returns 429, anonymous request does not" => pass
+verify: manual "101st keyed request returns 429, anonymous request does not"
+  => pass
 impact: if the CDN rule is ever removed, this endpoint is unprotected for
   anonymous callers and nothing here will tell you.
 todo: add an alert on the CDN rule, or fail closed here
@@ -205,7 +209,7 @@ source: spec:rfc9110#10.2.3 — Retry-After accepts delay-seconds
 verify: cmd `npm test -- rate-limit` => pass
 verify: manual "curl -i shows retry-after: 37" => pass
 
-@note -7 kind=note confidence=0.9
+@note -7 confidence=0.9
 why: The old code awaited `search(query)` into a variable that was used once.
   Inlining it keeps the happy path a single expression now that a branch sits
   above it.
