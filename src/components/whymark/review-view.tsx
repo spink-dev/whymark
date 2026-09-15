@@ -147,6 +147,50 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
     });
   }, [decisions, slug]);
 
+  /**
+   * Deciding by keyboard, for a reviewer stepping through with j/k: `x` rejects
+   * everything the selected annotation covers, which is the unit a reader has
+   * just formed an opinion about.
+   */
+  const toggleActiveNote = useCallback(() => {
+    if (!slug || !activeNoteId) return;
+    const file = review.files.find((candidate) =>
+      candidate.notes.some((note) => note.id === activeNoteId),
+    );
+    if (!file || !file.actionable) return;
+
+    const covered = file.rows.filter((row) => row.noteIds.includes(activeNoteId));
+    const adds = covered
+      .filter((row) => row.kind === "add" && row.newLine !== undefined)
+      .map((row) => row.newLine as number);
+    const dels = covered
+      .filter((row) => row.kind === "del" && row.oldLine !== undefined)
+      .map((row) => row.oldLine as number);
+    if (!adds.length && !dels.length) return;
+
+    const current = decisions[file.path] ?? { discardAdded: [], restoreDeleted: [] };
+    const alreadyDone =
+      adds.every((line) => current.discardAdded.includes(line)) &&
+      dels.every((line) => current.restoreDeleted.includes(line));
+
+    setFileDecisions(
+      file.path,
+      alreadyDone
+        ? {
+            discardAdded: current.discardAdded.filter((line) => !adds.includes(line)),
+            restoreDeleted: current.restoreDeleted.filter((line) => !dels.includes(line)),
+          }
+        : {
+            discardAdded: [...new Set([...current.discardAdded, ...adds])].sort(
+              (a, b) => a - b,
+            ),
+            restoreDeleted: [...new Set([...current.restoreDeleted, ...dels])].sort(
+              (a, b) => a - b,
+            ),
+          },
+    );
+  }, [activeNoteId, decisions, review.files, setFileDecisions, slug]);
+
   const onSaveEdit = useCallback(
     async (path: string, start: number, end: number, text: string) => {
       if (!slug) return { ok: false, error: "A pasted review has no file to write to." };
@@ -180,6 +224,10 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
         case "u":
           setMode((m) => (m === "unified" ? "split" : "unified"));
           break;
+        case "x":
+          event.preventDefault();
+          toggleActiveNote();
+          break;
         case "?":
           setShowHelp((s) => !s);
           break;
@@ -191,7 +239,7 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [jump]);
+  }, [jump, toggleActiveNote]);
 
   const { stats, meta } = review;
   const kinds = Object.entries(stats.byKind)
@@ -612,6 +660,7 @@ function FilterToggle({
 function HelpOverlay({ onClose }: { onClose: () => void }) {
   const rows: Array<[string, string]> = [
     ["j / k", "next / previous annotation"],
+    ["x", "reject what the selected annotation covers"],
     ["u", "unified ↔ side by side"],
     ["?", "toggle this help"],
     ["esc", "clear selection"],

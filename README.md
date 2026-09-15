@@ -120,9 +120,10 @@ Reading a review usually ends in a judgement: most of this is fine, that line is
 not. Since the viewer is already running against your checkout, it can act on
 that judgement directly instead of sending you to a pull request page.
 
-- **Discard a line.** Hover any changed line and use the control in the gutter:
+- **Discard a line.** Every changed line carries a control at its left edge:
   `×` drops an added line, `↩` puts a removed one back. The line is struck
-  through until you apply.
+  through until you apply. `x` does the same for everything the selected
+  annotation covers, so `j` `x` `j` `x` works as a review pass.
 - **Discard a hunk**, or **edit** it: `edit` opens the hunk's new text in an
   editor and writes your version to the file.
 - **Apply** collects the decisions across every file and writes them, then tells

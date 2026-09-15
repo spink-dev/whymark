@@ -724,7 +724,7 @@ function SplitRow({
         data-notes={row.noteIds.join(" ") || undefined}
         style={{ backgroundColor: rowTint(isHighlighted, highlightKind) }}
       >
-        <span className="w-[18px] shrink-0" aria-hidden />
+        <span className="w-5 shrink-0" aria-hidden />
         <span className="whymark-gutter w-11 shrink-0" />
       </div>
     );

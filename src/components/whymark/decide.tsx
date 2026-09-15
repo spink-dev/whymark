@@ -46,10 +46,10 @@ export function LineControl({
   disabled?: boolean;
 }) {
   if (kind !== "add" && kind !== "del") {
-    return <span className="w-[18px] shrink-0" aria-hidden />;
+    return <span className="w-5 shrink-0" aria-hidden />;
   }
   if (disabled) {
-    return <span className="w-[18px] shrink-0" aria-hidden />;
+    return <span className="w-5 shrink-0" aria-hidden />;
   }
 
   const decided = verdict !== "kept";
@@ -72,23 +72,31 @@ export function LineControl({
       title={label}
       aria-label={label}
       aria-pressed={decided}
+      // Always drawn, faint until wanted. Revealing it on hover hid the one
+      // control that turns reading a review into deciding on it.
       className={cn(
-        "flex w-[18px] shrink-0 items-center justify-center text-muted-foreground/70 transition-opacity",
-        decided ? "opacity-100" : "opacity-0 group-hover/row:opacity-70 hover:!opacity-100",
+        "flex h-full w-5 shrink-0 items-center justify-center transition-colors",
+        decided
+          ? "opacity-100"
+          : "opacity-55 hover:opacity-100 hover:bg-foreground/10 group-hover/row:opacity-85",
       )}
     >
       {kind === "add" ? (
         <X
           className={cn(
-            "size-3",
-            verdict === "discarded" && "text-[color:var(--whymark-del)]",
+            "size-3.5",
+            verdict === "discarded"
+              ? "text-[color:var(--whymark-del)]"
+              : "text-muted-foreground",
           )}
         />
       ) : (
         <Undo2
           className={cn(
-            "size-3",
-            verdict === "restored" && "text-[color:var(--whymark-add)]",
+            "size-3.5",
+            verdict === "restored"
+              ? "text-[color:var(--whymark-add)]"
+              : "text-muted-foreground",
           )}
         />
       )}
@@ -109,7 +117,7 @@ export function HunkControls({
   onEdit: () => void;
 }) {
   return (
-    <span className="ml-auto flex shrink-0 items-center gap-1 pr-1 opacity-0 transition-opacity group-hover/hunk:opacity-100 focus-within:opacity-100">
+    <span className="ml-auto flex shrink-0 items-center gap-1 pr-1 opacity-70 transition-opacity group-hover/hunk:opacity-100 focus-within:opacity-100">
       {decidedCount > 0 ? (
         <button
           type="button"

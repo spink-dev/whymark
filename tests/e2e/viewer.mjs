@@ -291,12 +291,37 @@ if (gitDirty()) {
   const editable = await page.evaluate(() => !document.body.innerText.includes("read-only"));
   check("decide flow: a file matching the working tree is editable", editable);
 
+  // Discoverability, not just presence: these controls used to be invisible
+  // until the row was hovered, and a careful operator following written
+  // instructions could not find them.
+  const resting = await page.evaluate(() => {
+    const buttons = [
+      ...document.querySelectorAll(
+        "button[aria-label*='added line'], button[aria-label*='removed line']",
+      ),
+    ];
+    return {
+      count: buttons.length,
+      faintest: buttons.length
+        ? Math.min(...buttons.map((b) => Number(getComputedStyle(b).opacity)))
+        : 0,
+      narrowest: buttons.length
+        ? Math.min(...buttons.map((b) => Math.round(b.getBoundingClientRect().width)))
+        : 0,
+    };
+  });
+  check(
+    "decide flow: every changed line shows its control without hovering",
+    resting.count > 5 && resting.faintest >= 0.4 && resting.narrowest >= 18,
+    JSON.stringify(resting),
+  );
+
   const logRow = page.locator(".whymark-row", { hasText: "[retry] attempt" }).first();
   await logRow.scrollIntoViewIfNeeded();
   await logRow.hover();
   const control = logRow.getByRole("button", { name: /discard this added line/i });
   const hasControl = (await control.count()) === 1;
-  check("decide flow: hovering a changed line offers a discard control", hasControl);
+  check("decide flow: a changed line offers a discard control", hasControl);
 
   if (hasControl) {
     await control.click();
@@ -349,6 +374,29 @@ if (gitDirty()) {
     execFileSync("git", ["checkout", "--", EXAMPLE]);
     check("decide flow: example restored", gitDirty() === "");
   }
+
+  // --- deciding from the keyboard ---------------------------------------
+  await page.goto(`${BASE}/r/retry-backoff`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1000);
+  await page.mouse.click(700, 400);
+  await page.keyboard.press("j");
+  await page.waitForTimeout(500);
+  await page.keyboard.press("x");
+  await page.waitForTimeout(500);
+  const byKeyboard = await page.evaluate(() =>
+    document.body.innerText.match(/discard \d+ added lines?|restore \d+ removed lines?/),
+  );
+  check(
+    "decide flow: x rejects what the selected annotation covers",
+    Boolean(byKeyboard),
+    JSON.stringify(byKeyboard),
+  );
+  await page.keyboard.press("x");
+  await page.waitForTimeout(400);
+  const cleared = await page.evaluate(
+    () => !/discard \d+ added lines?/.test(document.body.innerText),
+  );
+  check("decide flow: x again takes the decision back", cleared);
 
   // --- the inline editor ------------------------------------------------
   await page.goto(`${BASE}/r/retry-backoff`, { waitUntil: "networkidle" });
