@@ -1,0 +1,212 @@
+---
+crev: 1
+title: Rate limit the public search API
+author: claude-opus-5 (cursor)
+date: 2026-09-14T09:12:00Z
+scope: branch
+base: main@8f1c2ab
+head: cursor/rate-limit-search@d4e91f0
+repo: acme/storefront
+tags:
+  - api
+  - reliability
+summary: |
+  One integration partner was issuing ~40 search requests a second, which
+  saturated the read replica and slowed checkout for everyone. This adds a
+  fixed-window limiter in front of `/api/search` only: 100 requests per
+  minute per API key, `429` with `Retry-After` when exceeded.
+
+  It deliberately does not touch the other routes. The window is stored in
+  Redis with `INCR` + `EXPIRE`, so it is shared across the four app
+  instances rather than per-process.
+checks:
+  - cmd: npm test -- rate-limit
+    status: pass
+    detail: 11 tests, including the boundary at exactly 100
+    ran: 2026-09-14T09:10:44Z
+  - cmd: npm run typecheck
+    status: pass
+    ran: 2026-09-14T09:11:02Z
+  - cmd: npm run test:e2e
+    status: skipped
+    detail: needs a staging Redis; not available on this machine
+review:
+  status: pending
+---
+
+@note doc kind=risk risk=medium confidence=0.7
+why: Every limiter is a way to break traffic that used to work. If the 100/min
+  number is wrong for a real partner, they start getting 429s in production
+  with no warning.
+source: prompt:"cap the search endpoint, partners are hammering it" — the
+  requirement, but no number was given
+source: file:docs/partners.md:44 — the largest documented partner contract is
+  60 requests a minute, so 100 leaves headroom
+verify: none => unknown (no load test against production traffic shapes)
+todo: log limiter rejections for a week before enforcing, if you want a safer rollout
+
+@file src/lib/rate-limit.ts added +34 newsha=1a9c4e2
+@@ -0,0 +1,34 @@
++import { redis } from "@/lib/redis";
++
++export interface Decision {
++  allowed: boolean;
++  remaining: number;
++  resetSeconds: number;
++}
++
++const LIMIT = 100;
++const WINDOW_SECONDS = 60;
++
++/**
++ * Fixed window per key. Two Redis commands per request, pipelined, so the
++ * limiter costs one round trip.
++ */
++export async function take(key: string): Promise<Decision> {
++  const bucket = `rl:${key}:${Math.floor(Date.now() / 1000 / WINDOW_SECONDS)}`;
++  const [hits] = await redis
++    .pipeline()
++    .incr(bucket)
++    .expire(bucket, WINDOW_SECONDS)
++    .exec();
++
++  const count = Number(hits);
++  return {
++    allowed: count <= LIMIT,
++    remaining: Math.max(0, LIMIT - count),
++    resetSeconds:
++      WINDOW_SECONDS - (Math.floor(Date.now() / 1000) % WINDOW_SECONDS),
++  };
++}
++
++export function bucketFor(key: string, at = Date.now()): string {
++  return `rl:${key}:${Math.floor(at / 1000 / WINDOW_SECONDS)}`;
++}
+
+@note +1..7 kind=intent confidence=0.95
+why: The module returns a `Decision` object rather than a boolean so the route
+  can put `remaining` and `resetSeconds` into headers without recomputing the
+  window arithmetic.
+source: convention:src/lib/search.ts:9 — the other lib modules also return a
+  result object rather than a primitive
+verify: type => pass
+
+@note +11..15 kind=intent confidence=0.9
+why: The comment records the cost of the design (two commands, one round trip)
+  because that is the thing a future reader will want to know before adding a
+  third Redis call to this function.
+verify: review => pass
+
+@note +25..31 kind=intent confidence=0.85
+why: `remaining` is clamped at zero because `INCR` keeps counting past the
+  limit; without the clamp a blocked client would see a negative number in the
+  header. `resetSeconds` is derived from the wall clock rather than Redis TTL to
+  avoid a second round trip.
+source: file:src/app/api/search/route.ts:21 — the only consumer, which puts
+  both values in the 429 response
+verify: cmd `npm test -- rate-limit` => pass (asserts remaining never goes below 0)
+alt: `TTL bucket` for the reset value — rejected, it costs another round trip
+  for a number the process can already compute
+
+@note +9..10 kind=intent risk=low confidence=0.9
+why: The limit and window are constants rather than config because there is no
+  runtime config mechanism in this service yet, and inventing one here would
+  have made the change much larger than the problem.
+source: convention:src/lib/*.ts — every other module in `lib/` hard-codes its
+  tuning values the same way
+source: file:docs/partners.md:44 — 100/min sits above the largest contract
+alt: env vars — rejected for now; there is no schema or validation for env in
+  this service, so a typo would fail silently at runtime
+impact: changing the limit needs a deploy, which is acceptable while there is
+  exactly one consumer of this module
+
+@note +16..24 kind=intent risk=medium confidence=0.85
+why: A fixed window was chosen over a token bucket because `INCR`/`EXPIRE` are
+  atomic on the Redis side, so no lock or Lua script is needed and the limiter
+  stays correct across the four app instances.
+source: url:https://redis.io/docs/latest/commands/incr — INCR is atomic and
+  creates the key at 0 when missing
+source: file:src/lib/redis.ts:12 — the shared client already pipelines
+verify: cmd `npm test -- rate-limit` => pass (11 tests)
+verify: type => pass
+alt: sliding window log — rejected, it needs one sorted-set entry per request,
+  which is far more memory for a limit this coarse
+alt: token bucket in process memory — rejected, four instances would each allow
+  the full 100
+
+The known cost of a fixed window is burstiness at the boundary: a client can
+send 100 requests at 11:59:59 and 100 more at 12:00:00. For protecting a read
+replica that is acceptable; for billing it would not be.
+
+@note +19..23 kind=assumption risk=medium confidence=0.5
+why: `EXPIRE` is issued on every request rather than only on creation, so a
+  long-running window keeps having its TTL reset to a full 60 seconds.
+source: inference — I could not find a codebase convention for this, and the
+  Redis docs do not say EXPIRE-on-every-INCR is wrong, only that it is redundant
+verify: cmd `npm test -- rate-limit` => pass (the test asserts the window resets
+  at 60s, which passes because the clock is faked)
+question: is refreshing the TTL on every hit acceptable, or should this be
+  `SET key 1 EX 60 NX` followed by `INCR`?
+todo: confirm against a real Redis before this ships
+
+@note +32..34 kind=test confidence=0.9
+why: `bucketFor` exists only so the test can compute the same key the limiter
+  will use, without duplicating the arithmetic in the test file.
+source: test:tests/rate-limit.test.ts:14 — the only caller
+verify: cmd `npm test -- rate-limit` => pass
+
+@file src/app/api/search/route.ts modified +13 -2 newsha=7b3d5f8
+@@ -1,9 +1,14 @@
+ import { NextResponse } from "next/server";
+ import { search } from "@/lib/search";
++import { take } from "@/lib/rate-limit";
+ 
+ export async function GET(request: Request) {
+   const url = new URL(request.url);
+   const query = url.searchParams.get("q") ?? "";
+-  const results = await search(query);
+-  return NextResponse.json({ results });
++  const apiKey = request.headers.get("x-api-key");
++  if (apiKey) {
++    const decision = await take(apiKey);
++    if (!decision.allowed) return tooMany(decision.resetSeconds);
++  }
++  return NextResponse.json({ results: await search(query) });
+ }
+@@ -10,2 +15,9 @@
+ 
+ export const runtime = "nodejs";
++
++function tooMany(resetSeconds: number) {
++  return NextResponse.json(
++    { error: "rate_limited", retryAfter: resetSeconds },
++    { status: 429, headers: { "retry-after": String(resetSeconds) } },
++  );
++}
+
+@note +8..11 kind=security risk=high confidence=0.8
+why: Requests without an `x-api-key` header are not limited at all. Anonymous
+  search traffic goes through the CDN and was already capped there, and adding
+  an IP-based limit here would have hit shared-NAT users.
+source: file:infra/cdn.tf:88 — the CDN rule caps anonymous search at 20/min/IP
+source: prompt:"partners are hammering it" — the reported problem is keyed
+  traffic, not anonymous
+verify: cmd `npm test -- rate-limit` => pass (covers the missing-key path)
+verify: manual "101st keyed request returns 429, anonymous request does not" => pass
+impact: if the CDN rule is ever removed, this endpoint is unprotected for
+  anonymous callers and nothing here will tell you.
+todo: add an alert on the CDN rule, or fail closed here
+
+@note +17..23 kind=intent confidence=0.95
+why: `Retry-After` is sent in seconds rather than a date because the value is
+  computed as a duration and the HTTP spec allows either; a duration avoids
+  clock-skew between our servers and the client.
+source: spec:rfc9110#10.2.3 — Retry-After accepts delay-seconds
+verify: cmd `npm test -- rate-limit` => pass
+verify: manual "curl -i shows retry-after: 37" => pass
+
+@note -7 kind=note confidence=0.9
+why: The old code awaited `search(query)` into a variable that was used once.
+  Inlining it keeps the happy path a single expression now that a branch sits
+  above it.
+verify: review => pass

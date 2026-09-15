@@ -59,6 +59,16 @@ const REPEATABLE = new Set([
 
 const SCALAR_FIELDS = new Set(["why", "what", "impact"]);
 
+/** Field names that end a free-form body and start a new field. */
+const KNOWN_FIELDS = new Set([
+  ...SCALAR_FIELDS,
+  ...REPEATABLE,
+  "kind",
+  "risk",
+  "confidence",
+  "id",
+]);
+
 const FIELD_RE = /^([a-zA-Z][a-zA-Z0-9_-]*):(?:[ \t]+(.*))?$/;
 const ARROW_RE = /\s*(?:=>|->|⇒)\s*/;
 
@@ -792,6 +802,14 @@ function applyNoteLine(
   diagnostics: Diagnostic[],
 ) {
   if (ctx.inBody) {
+    // Models often write a field after a paragraph. Recognise the documented
+    // field names again rather than silently swallowing them into prose.
+    const resumed = FIELD_RE.exec(raw);
+    if (resumed && KNOWN_FIELDS.has(resumed[1].toLowerCase())) {
+      ctx.inBody = false;
+      setField(ctx, resumed[1].toLowerCase(), (resumed[2] ?? "").trim(), lineNo, diagnostics);
+      return;
+    }
     ctx.bodyLines.push(raw);
     return;
   }
@@ -870,31 +888,52 @@ function setField(
 
   // Attributes are allowed as fields too, which is how models often write them.
   if (key === "kind" || key === "risk" || key === "confidence" || key === "id") {
+    const num = Number(value.replace("%", ""));
     if (key === "kind" && NOTE_KINDS.includes(value as NoteKind)) {
       note.kind = value as NoteKind;
-    } else if (key === "risk" && ["low", "medium", "high"].includes(value)) {
-      note.risk = value as Risk;
-    } else if (key === "confidence") {
-      const num = Number(value.replace("%", ""));
-      if (Number.isFinite(num)) note.confidence = num > 1 ? num / 100 : num;
-    } else if (key === "id") {
-      note.id = value;
+      ctx.lastField = null;
+      return;
     }
-    ctx.lastField = null;
-    return;
+    if (key === "risk" && ["low", "medium", "high"].includes(value)) {
+      note.risk = value as Risk;
+      ctx.lastField = null;
+      return;
+    }
+    if (key === "confidence" && Number.isFinite(num)) {
+      note.confidence = num > 1 ? num / 100 : num;
+      ctx.lastField = null;
+      return;
+    }
+    if (key === "id" && /^[\w.-]+$/.test(value)) {
+      note.id = value;
+      ctx.lastField = null;
+      return;
+    }
+    // `risk: if the CDN rule is ever removed…` is prose, not a level. Keep the
+    // text instead of dropping it on the floor.
+    diagnostics.push({
+      level: "warning",
+      code: "attribute-as-prose",
+      message: `\`${key}: ${truncate(value, 30)}\` is not a valid ${key} value, so it was kept as a plain field. Attribute values are fixed: kind, risk (low|medium|high), confidence (0..1), id.`,
+      line: lineNo,
+      file: note.file ?? undefined,
+      noteId: note.id,
+    });
   }
 
   note.extra[key] ??= [];
   note.extra[key].push(value);
   ctx.lastField = { name: `extra:${key}`, index: note.extra[key].length - 1 };
-  diagnostics.push({
-    level: "info",
-    code: "field-unknown",
-    message: `Field \`${name}\` is outside the spec and was preserved as-is.`,
-    line: lineNo,
-    file: note.file ?? undefined,
-    noteId: note.id,
-  });
+  if (!KNOWN_FIELDS.has(key)) {
+    diagnostics.push({
+      level: "info",
+      code: "field-unknown",
+      message: `Field \`${name}\` is outside the spec and was preserved as-is.`,
+      line: lineNo,
+      file: note.file ?? undefined,
+      noteId: note.id,
+    });
+  }
 }
 
 function appendToField(ctx: NoteContext, text: string) {
