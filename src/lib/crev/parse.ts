@@ -68,7 +68,21 @@ const KNOWN_FIELDS = new Set([
   "id",
 ]);
 
-const FIELD_RE = /^([a-zA-Z][a-zA-Z0-9_-]*):(?:[ \t]+(.*))?$/;
+const FIELD_RE = /^([a-zA-Z][a-zA-Z0-9_-]*):([ \t]*)(.*)$/;
+
+/**
+ * `why: x` is always a field. `why:x` is one too, but only for the documented
+ * field names — otherwise a body line starting with `https://…` would parse as
+ * a field called `https`.
+ */
+function fieldAt(raw: string): { name: string; value: string } | null {
+  const match = FIELD_RE.exec(raw);
+  if (!match) return null;
+  const name = match[1].toLowerCase();
+  const tight = match[2].length === 0 && match[3].length > 0;
+  if (tight && !KNOWN_FIELDS.has(name)) return null;
+  return { name, value: match[3].trim() };
+}
 const ARROW_RE = /\s*(?:=>|->|⇒)\s*/;
 
 export interface ParseOptions {
@@ -805,10 +819,10 @@ function applyNoteLine(
   if (ctx.inBody) {
     // Models often write a field after a paragraph. Recognise the documented
     // field names again rather than silently swallowing them into prose.
-    const resumed = FIELD_RE.exec(raw);
-    if (resumed && KNOWN_FIELDS.has(resumed[1].toLowerCase())) {
+    const resumed = fieldAt(raw);
+    if (resumed && KNOWN_FIELDS.has(resumed.name)) {
       ctx.inBody = false;
-      setField(ctx, resumed[1].toLowerCase(), (resumed[2] ?? "").trim(), lineNo, diagnostics);
+      setField(ctx, resumed.name, resumed.value, lineNo, diagnostics);
       return;
     }
     ctx.bodyLines.push(raw);
@@ -827,11 +841,9 @@ function applyNoteLine(
     return;
   }
 
-  const m = FIELD_RE.exec(raw);
-  if (m && !indented) {
-    const name = m[1].toLowerCase();
-    const value = (m[2] ?? "").trim();
-    setField(ctx, name, value, lineNo, diagnostics);
+  const field = indented ? null : fieldAt(raw);
+  if (field) {
+    setField(ctx, field.name, field.value, lineNo, diagnostics);
     return;
   }
 

@@ -156,26 +156,56 @@ export function serializeNote(note: Note, wrap = 78): string {
   return lines.join("\n");
 }
 
+/**
+ * Wraps a field value at `wrap` columns, continuing on lines indented by two
+ * spaces. Backtick and quote spans are never broken, so a command stays
+ * re-runnable, and a line only breaks where whitespace already was.
+ */
 function wrapField(name: string, value: string, wrap: number): string[] {
   const first = `${name}: ${value}`;
-  if (!wrap || first.length <= wrap || value.includes("`")) return [first];
+  if (!wrap || first.length <= wrap) return [first];
 
-  const words = value.split(/\s+/);
+  const pieces = splitPreservingSpans(value);
   const out: string[] = [];
   let current = `${name}:`;
-  let indent = "";
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : `${indent}${word}`;
-    if (candidate.length > wrap && current.trim() !== `${name}:`) {
+  let breakable = false;
+
+  for (const piece of pieces) {
+    const candidate = `${current}${piece.space ? " " : ""}${piece.text}`;
+    if (candidate.length > wrap && piece.space && breakable) {
       out.push(current);
-      indent = "  ";
-      current = `${indent}${word}`;
+      current = `  ${piece.text}`;
     } else {
       current = candidate;
     }
+    breakable = true;
   }
   if (current.trim()) out.push(current);
   return out;
+}
+
+interface Piece {
+  text: string;
+  /** Whether whitespace separated this piece from the previous one. */
+  space: boolean;
+}
+
+function splitPreservingSpans(value: string): Piece[] {
+  const re = /`[^`]*`|"[^"]*"|[^\s`"]+|\s+/g;
+  const pieces: Piece[] = [];
+  let space = false;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(value))) {
+    if (/^\s+$/.test(match[0])) {
+      space = true;
+      continue;
+    }
+    pieces.push({ text: match[0], space });
+    space = false;
+  }
+  // The first piece always follows `name:`, which needs its space.
+  if (pieces.length) pieces[0].space = true;
+  return pieces;
 }
 
 function round(value: number): string {

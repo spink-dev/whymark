@@ -251,6 +251,71 @@ why: annotating an annotation
     expect(doc.files[0].notes).toHaveLength(1);
   });
 
+  it("accepts a field written without a space after the colon", () => {
+    const doc = parseCrev(`---
+crev: 1
+title: t
+---
+
+@file a.ts added +1
+@@ -0,0 +1 @@
++const x = 1;
+
+@note +1 kind=intent
+why:no space after the colon
+verify:cmd \`npm test\` => pass
+`);
+    const note = doc.files[0].notes[0];
+    expect(note.why).toBe("no space after the colon");
+    expect(note.verify[0]).toMatchObject({ method: "cmd", status: "pass" });
+  });
+
+  it("does not read a bare URL in a body as a field", () => {
+    const doc = parseCrev(`---
+crev: 1
+title: t
+---
+
+@file a.ts added +1
+@@ -0,0 +1 @@
++const x = 1;
+
+@note +1 kind=intent
+why: because
+
+https://example.com/docs explains the rest.
+`);
+    const note = doc.files[0].notes[0];
+    expect(note.body).toBe("https://example.com/docs explains the rest.");
+    expect(note.extra).toEqual({});
+  });
+
+  it("keeps code spans intact when wrapping long values", () => {
+    const long =
+      "This explanation is quite long so that the serializer has to wrap it across several lines, and it mentions `npm run test:e2e -- --grep limiter` which must stay on one line.";
+    const doc = parseCrev(`---
+crev: 1
+title: t
+---
+
+@file a.ts added +1
+@@ -0,0 +1 @@
++const x = 1;
+
+@note +1 kind=intent
+why: ${long}
+`);
+    const text = serializeCrev(doc);
+    expect(text).toContain("`npm run test:e2e -- --grep limiter`");
+    for (const line of text.split("\n")) {
+      if (line.startsWith("why:") || line.startsWith("  ")) {
+        expect(line.length).toBeLessThanOrEqual(90);
+      }
+    }
+    expect(parseCrev(text).files[0].notes[0].why).toBe(long);
+    expect(serializeCrev(parseCrev(text))).toBe(text);
+  });
+
   it("recovers from a missing frontmatter with an error, not a throw", () => {
     const doc = parseCrev("@file a.ts modified\n@@ -1 +1 @@\n+x\n");
     expect(doc.diagnostics.some((d) => d.code === "frontmatter-missing")).toBe(true);

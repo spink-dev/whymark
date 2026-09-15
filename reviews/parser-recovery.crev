@@ -1,0 +1,351 @@
+---
+crev: 1
+title: Fix five papercuts found by running crev on crev
+author: claude-opus-5 (cursor cloud agent)
+date: 2026-09-15T12:37:12Z
+scope: commit
+base: HEAD^@f77caf8
+head: HEAD@77c6208
+repo: crev
+tags:
+  - dogfooding
+  - cli
+summary: |
+  Five unrelated small fixes, all found by using this tool on its own output
+  rather than by reading the code again.
+
+  Writing the first example review surfaced two output bugs: a plain modified
+  file was serialised with `from=<same path>`, which made a round-trip through
+  the parser report it as *renamed*; and `crev prompt` was emitting the
+  human-facing preamble of the prompt template to an agent that only needed the
+  instructions. The CLI also printed "Try --staged" when the user had just
+  passed `--staged`, and `--staged` reviews silently included untracked files,
+  which are by definition not staged. Finally, `npm run lint` rejected the
+  `useMediaQuery` hook, so it is now built on `useSyncExternalStore`.
+
+  No behaviour in the format itself changed; the parser and serializer fixes
+  only affect what a generated document says about a file.
+checks:
+  - cmd: npm test
+    status: pass
+    detail: exit 0 in 0.6s
+    ran: 2026-09-15T12:41:37.291Z
+  - cmd: npm run lint
+    status: pass
+    detail: exit 0 in 2.4s
+    ran: 2026-09-15T12:41:39.660Z
+  - cmd: npm run typecheck
+    status: pass
+    detail: exit 0 in 1.4s
+    ran: 2026-09-15T12:41:41.018Z
+---
+
+@note doc kind=intent confidence=0.9
+why: This review exists to show what the format looks like when it is written
+  about real, boring work rather than a showcase change. Every `source:` below
+  is either a command whose output I read or an honest `inference`.
+source: prompt:"either create file directly with AI, so I need a prompt or a skill, or generate it just based on code changes"
+  — the request this repo answers
+verify: cmd `npm test` => pass (exit 0 in 0.6s)
+
+@file src/cli/crev.ts modified +22 -7 oldsha=0cc4f1e newsha=45e0620
+@@ -211,9 +211,7 @@ function buildDoc(args: Args) {
+ 
+ function cmdNew(args: Args) {
+   const { doc, diff, cwd } = buildDoc(args);
+-  if (!diff.files.length) {
+-    fail(`No changes found for scope \`${doc.meta.scope}\`. Try --staged or --branch.`);
+-  }
++  if (!diff.files.length) noChanges(doc.meta.scope);
+ 
+   const text = serializeCrev(doc);
+   const out = str(args.flags.get("out")) ?? str(args.flags.get("o"));
+@@ -248,15 +246,24 @@ function cmdNew(args: Args) {
+   );
+ }
+ 
++function noChanges(scope: Scope | undefined): never {
++  const others = ["--staged", "--unstaged", "--branch main", "--commit HEAD"].filter(
++    (flag) => !flag.includes(String(scope)),
++  );
++  fail(
++    `No changes in scope \`${scope}\`${
++      "" // keep the hint on one line
++    }. Nothing to review — try ${others.slice(0, 3).join(", ")}, or pass --path.`,
++  );
++}
++
+ function cmdPrompt(args: Args) {
+   const { doc, diff, cwd } = buildDoc(args);
+-  if (!diff.files.length) {
+-    fail(`No changes found for scope \`${doc.meta.scope}\`. Try --staged or --branch.`);
+-  }
++  if (!diff.files.length) noChanges(doc.meta.scope);
+   const skeleton = serializeCrev(doc);
+   const templatePath = join(cwd, "prompts", "crev-author.md");
+   const template = existsSync(templatePath)
+-    ? readFileSync(templatePath, "utf8")
++    ? stripPreamble(readFileSync(templatePath, "utf8"))
+     : FALLBACK_PROMPT;
+   process.stdout.write(
+     template.replace("{{SKELETON}}", skeleton.trimEnd()).replace(
+@@ -266,6 +273,14 @@ function cmdPrompt(args: Args) {
+   );
+ }
+ 
++/** The template file explains itself to a human above the first `---`; the
++ *  agent only needs what comes after it. */
++function stripPreamble(template: string): string {
++  const lines = template.split("\n");
++  const separator = lines.findIndex((line) => line.trim() === "---");
++  return separator === -1 ? template : lines.slice(separator + 1).join("\n").trimStart();
++}
++
+ const FALLBACK_PROMPT = `Fill in this CREV review of your own changes. Replace every TODO.
+ For each annotation give: why the code is that way, a \`source:\` for the evidence
+ (use \`inference\` when there was none), and a \`verify:\` claim naming the exact
+
+@note +214 kind=intent confidence=0.95
+why: Both commands failed with the same hand-written message, and that message
+  told the reader to "Try --staged or --branch" even when they had just passed
+  `--staged` — the one suggestion guaranteed to be useless. Routing both
+  through one helper means the advice can be computed from the scope that
+  actually failed.
+source: inference — I hit this myself running `crev new --staged` in a clean
+  tree
+verify: cmd `npm run typecheck` => pass (exit 0 in 1.4s)
+verify: manual
+  "crev new --staged in a clean tree now suggests --branch main, --commit HEAD, --path"
+  => pass
+
+@note +249..258 kind=intent confidence=0.9
+why: The suggestions are filtered against the scope that failed, so the error
+  never recommends the thing the user just tried. Three are shown rather than
+  all four because a one-line hint that lists every possibility reads as
+  noise.
+source: inference — no convention for CLI error copy exists in this repo yet;
+  this is the first place that needed one
+verify: manual "error text for --staged omits --staged" => pass
+alt: throwing a typed error and formatting it at the top level — rejected, the
+  CLI has exactly two call sites and no other error needs the treatment
+
+@note +262 confidence=0.95
+why: The second call site, identical to the first. Kept as a one-liner so the
+  two commands visibly share the behaviour.
+verify: cmd `npm run typecheck` => pass (exit 0 in 1.4s)
+
+@note +266 kind=intent risk=low confidence=0.85
+why: `crev prompt` pipes its output straight into an agent, but the template
+  file starts with a paragraph addressed to a human ("Paste everything below into any coding agent"),
+  which the agent would then have read as part of its instructions.
+source: file:prompts/crev-author.md:1 — the preamble, ending at the first
+  `---`
+verify: manual
+  "crev prompt --commit <sha> now begins at 'Below is a CREV skeleton'" =>
+  pass
+
+@note +276..282 kind=intent confidence=0.8
+why: The split is on the first line that is exactly `---` because the template
+  is markdown, where a horizontal rule is the natural boundary between
+  "notes for the reader" and "the prompt itself". Falling back to the whole
+  file keeps a template with no rule usable rather than emitting nothing.
+source: file:prompts/crev-author.md:11 — the separator this relies on
+verify: cmd `npm run typecheck` => pass (exit 0 in 1.4s)
+todo: if a second consumer of the template appears, this belongs next to the
+  template rather than in the CLI
+
+@file src/components/crev/use-media-query.ts modified +15 -10 oldsha=5c7e658 newsha=706588e
+@@ -1,17 +1,22 @@
+ "use client";
+ 
+-import { useEffect, useState } from "react";
++import { useCallback, useSyncExternalStore } from "react";
+ 
++/**
++ * `fallback` is what the server renders, so pick the value that gives the
++ * layout the review page should have before hydration.
++ */
+ export function useMediaQuery(query: string, fallback = false): boolean {
+-  const [matches, setMatches] = useState(fallback);
++  const subscribe = useCallback(
++    (onChange: () => void) => {
++      const list = window.matchMedia(query);
++      list.addEventListener("change", onChange);
++      return () => list.removeEventListener("change", onChange);
++    },
++    [query],
++  );
+ 
+-  useEffect(() => {
+-    const list = window.matchMedia(query);
+-    setMatches(list.matches);
+-    const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
+-    list.addEventListener("change", handler);
+-    return () => list.removeEventListener("change", handler);
+-  }, [query]);
++  const getSnapshot = useCallback(() => window.matchMedia(query).matches, [query]);
+ 
+-  return matches;
++  return useSyncExternalStore(subscribe, getSnapshot, () => fallback);
+ }
+
+@note +10..21 kind=intent risk=low confidence=0.9
+why: The first version set state inside an effect to seed the initial match,
+  which `npm run lint` rejects (react-hooks/set-state-in-effect) because it
+  causes a second render pass on every mount. `useSyncExternalStore` is the
+  API built for exactly this: subscribe, read, and a separate server snapshot.
+source: url:https://react.dev/reference/react/useSyncExternalStore — the
+  getServerSnapshot argument is what makes this SSR-safe
+source: file:src/components/crev/review-view.tsx:38 — the only caller, which
+  needs a value on the very first render to choose the layout
+verify: cmd `npm run lint` => pass (exit 0 in 2.4s)
+verify: cmd `npm run build` => pass (exit 0 in 3.6s)
+alt: keeping useState and reading matchMedia lazily in the initialiser —
+  rejected, that runs on the server where matchMedia does not exist
+
+@note +5..8 kind=assumption confidence=0.6
+why: The comment is the whole point of the third argument: the server renders
+  `fallback`, so a wrong fallback shows the mobile layout for a frame on a
+  desktop. The review page passes `true` for that reason.
+source: inference — no hydration convention is written down in this repo
+verify: manual "no hydration warning in the dev console on the review page" =>
+  pass
+
+@file src/lib/crev/git.ts modified +8 -5 oldsha=cf948a6 newsha=35588b9
+@@ -2,7 +2,6 @@ import { execFileSync, spawnSync } from "node:child_process";
+ import {
+   type CrevDocument,
+   type FileSection,
+-  type FileStatus,
+   type Hunk,
+   type Note,
+   type Scope,
+@@ -155,6 +154,8 @@ export function collectDiff(request: DiffRequest): DiffResult {
+   const raw = git(args, { cwd });
+   const files = parseUnifiedDiff(raw);
+ 
+-  if (request.untracked && request.scope !== "commit" && request.scope !== "branch") {
++  // Untracked files live in the working tree only, so they belong to the
++  // working-tree scopes and would be a lie in a `--staged` or `--branch` review.
++  if (request.untracked && (request.scope === "unstaged" || request.scope === "worktree")) {
+     files.push(...collectUntracked(context, cwd, request.paths));
+   }
+@@ -192,7 +193,7 @@ function collectUntracked(
+     section.path = path;
+     section.oldPath = undefined;
+     section.status = "added";
+-    section.newSha = hashObject(path, cwd) ?? undefined;
++    section.newSha = hashObject(path, cwd, 7) ?? undefined;
+     out.push(section);
+   }
+   return out;
+@@ -480,7 +481,9 @@ function titleFor(scope: Scope, diff: DiffResult): string {
+ }
+ 
+ /** Current blob hash of a working-tree file, for staleness detection. */
+-export function hashObject(path: string, cwd?: string): string | null {
++export function hashObject(path: string, cwd?: string, abbrev = 0): string | null {
+   const out = tryGit(["hash-object", "--", path], { cwd });
+-  return out ? out.trim() : null;
++  if (!out) return null;
++  const sha = out.trim();
++  return abbrev ? sha.slice(0, abbrev) : sha;
+ }
+
+@note -5 confidence=0.95
+why: Unused since the file's `FileSection` factory stopped taking a status
+  argument; `npm run lint` reported it.
+verify: cmd `npm run lint` => pass (exit 0 in 2.4s)
+
+@note +157..159 kind=intent risk=medium confidence=0.9
+why: Untracked files exist only in the working tree, so including them in a
+  `--staged` review claimed that files which are not in the index are part of
+  the staged change. The condition now names the two scopes where they belong
+  instead of excluding the two where they do not, which is also correct for
+  any scope added later.
+source: inference — found by running `crev new --staged` while three new files
+  were untracked and seeing them in the output
+verify: cmd `npm test` => pass (exit 0 in 0.6s)
+verify: manual
+  "crev new --staged in a tree with untracked files reports no changes; --worktree lists them"
+  => pass
+impact: an agent reviewing its own staged work no longer has to explain files
+  it has not staged
+
+@note +196 confidence=0.85
+why: git's own `index` line gives abbreviated hashes, so a document mixing the
+  two sources had 7-character hashes for tracked files and 40-character ones
+  for untracked files. Staleness comparison is prefix-based either way; this
+  is purely so the generated file reads consistently.
+source: file:src/lib/crev/validate.ts:104 — the comparison that tolerates
+  either length
+verify: cmd `npm test` => pass (exit 0 in 0.6s)
+
+@note +484..488 kind=intent confidence=0.9
+why: `abbrev` defaults to 0 so the existing caller in the validator keeps
+  getting the full hash it compares against, and only the generator asks for a
+  short one.
+source: file:src/lib/crev/validate.ts:104 — the caller that must not be
+  truncated
+verify: cmd `npm test` => pass (exit 0 in 0.6s)
+verify: type => pass
+
+@file src/lib/crev/parse.ts modified +3 -2 oldsha=bbe1b17 newsha=e42fdd3
+@@ -3,7 +3,6 @@ import {
+   CREV_VERSION,
+   NOTE_KINDS,
+   VERIFY_METHODS,
+-  type Check,
+   type CrevDocument,
+   type Diagnostic,
+   type DiffLine,
+@@ -477,6 +476,8 @@ function parseFileDirective(
+     });
+   }
+ 
+-  if (!sawStatus && section.oldPath) section.status = "renamed";
++  if (!sawStatus && section.oldPath && section.oldPath !== section.path) {
++    section.status = "renamed";
++  }
+   return section;
+ }
+
+@note -6 confidence=0.95
+why: `Check` moved to the serializer when `@check` lines started being merged
+  into frontmatter; the import outlived the use. Reported by lint.
+verify: cmd `npm run lint` => pass (exit 0 in 2.4s)
+
+@note +479..481 kind=intent risk=medium confidence=0.9
+why: This is the parser half of a round-trip bug. `parseUnifiedDiff` fills
+  `oldPath` from the `--- a/path` line of every diff, including plain
+  modifications, the serializer then wrote `from=<same path>`, and re-parsing
+  that file inferred `renamed` from the presence of `from=`. A file that was
+  only edited came back as a rename.
+source: inference — noticed in the `@file` lines of a generated skeleton, not
+  from a failing test
+source: test:tests/parse.test.ts:112 — the round-trip test, which passed
+  throughout because its fixture has no rename
+verify: cmd `npm test` => pass (exit 0 in 0.6s)
+verify: manual "crev new --worktree emits no from= for modified files" => pass
+todo: add a fixture that round-trips a rename and a modification together, so
+  the next regression here fails a test instead of being spotted by eye
+
+@file src/lib/crev/serialize.ts modified +3 -1 oldsha=139d99b newsha=e9de5fb
+@@ -85,7 +85,9 @@ export function serializeFileHeader(file: FileSection): string {
+   const parts = ["@file", quoteIfNeeded(file.path), file.status];
+   if (file.added) parts.push(`+${file.added}`);
+   if (file.removed) parts.push(`-${file.removed}`);
+-  if (file.oldPath) parts.push(`from=${quoteIfNeeded(file.oldPath)}`);
++  if (file.oldPath && file.oldPath !== file.path) {
++    parts.push(`from=${quoteIfNeeded(file.oldPath)}`);
++  }
+   if (file.oldSha) parts.push(`oldsha=${file.oldSha}`);
+   if (file.newSha) parts.push(`newsha=${file.newSha}`);
+   if (file.lang) parts.push(`lang=${file.lang}`);
+
+@note +88..90 kind=intent confidence=0.95
+why: The serializer half of the same bug. Both halves are needed: the guard
+  here stops the bad output being written, and the guard in the parser stops
+  documents that already contain it being misread.
+verify: cmd `npm test` => pass (exit 0 in 0.6s)
+ref: src/lib/crev/parse.ts:479

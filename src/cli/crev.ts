@@ -28,44 +28,68 @@ function colors() {
   };
 }
 
-interface Args {
-  command: string;
-  positionals: string[];
-  flags: Map<string, string | true>;
+/** Flags may repeat (`--path a --path b`), so every value is kept. */
+class Args {
+  constructor(
+    readonly command: string,
+    readonly positionals: string[],
+    private readonly flags: Map<string, Array<string | true>>,
+  ) {}
+
+  has(...names: string[]): boolean {
+    return names.some((name) => this.flags.has(name));
+  }
+
+  /** Last value given, or undefined for a boolean or absent flag. */
+  str(...names: string[]): string | undefined {
+    for (const name of names) {
+      const values = this.flags.get(name);
+      const last = values?.[values.length - 1];
+      if (typeof last === "string") return last;
+    }
+    return undefined;
+  }
+
+  all(name: string): string[] {
+    return (this.flags.get(name) ?? []).filter(
+      (value): value is string => typeof value === "string",
+    );
+  }
 }
 
 function parseArgs(argv: string[]): Args {
   const [command = "help", ...rest] = argv;
   const positionals: string[] = [];
-  const flags = new Map<string, string | true>();
+  const flags = new Map<string, Array<string | true>>();
+  const add = (name: string, value: string | true) => {
+    const existing = flags.get(name);
+    if (existing) existing.push(value);
+    else flags.set(name, [value]);
+  };
+
   for (let i = 0; i < rest.length; i++) {
     const token = rest[i];
-    if (token.startsWith("--")) {
-      const eq = token.indexOf("=");
-      if (eq > 0) {
-        flags.set(token.slice(2, eq), token.slice(eq + 1));
-      } else {
-        const next = rest[i + 1];
-        if (isValue(next)) {
-          flags.set(token.slice(2), next);
-          i++;
-        } else {
-          flags.set(token.slice(2), true);
-        }
-      }
-    } else if (token.startsWith("-") && token.length > 1) {
-      const next = rest[i + 1];
-      if (isValue(next)) {
-        flags.set(token.slice(1), next);
-        i++;
-      } else {
-        flags.set(token.slice(1), true);
-      }
-    } else {
+    const dashes = token.startsWith("--") ? 2 : token.startsWith("-") && token.length > 1 ? 1 : 0;
+    if (!dashes) {
       positionals.push(token);
+      continue;
+    }
+    const eq = token.indexOf("=");
+    if (dashes === 2 && eq > 0) {
+      add(token.slice(2, eq), token.slice(eq + 1));
+      continue;
+    }
+    const name = token.slice(dashes);
+    const next = rest[i + 1];
+    if (isValue(next)) {
+      add(name, next);
+      i++;
+    } else {
+      add(name, true);
     }
   }
-  return { command, positionals, flags };
+
+  return new Args(command, positionals, flags);
 }
 
 /** `-` is stdout, not another flag. */
@@ -149,16 +173,14 @@ function main() {
 }
 
 function scopeFrom(args: Args): { scope: Scope; base?: string; commit?: string } {
-  if (args.flags.has("unstaged")) return { scope: "unstaged" };
-  if (args.flags.has("staged") || args.flags.has("cached")) return { scope: "staged" };
-  if (args.flags.has("worktree")) return { scope: "worktree" };
-  if (args.flags.has("branch")) {
-    const value = args.flags.get("branch");
-    return { scope: "branch", base: typeof value === "string" ? value : undefined };
+  if (args.has("unstaged")) return { scope: "unstaged" };
+  if (args.has("staged", "cached")) return { scope: "staged" };
+  if (args.has("worktree")) return { scope: "worktree" };
+  if (args.has("branch")) {
+    return { scope: "branch", base: args.str("branch") };
   }
-  if (args.flags.has("commit")) {
-    const value = args.flags.get("commit");
-    return { scope: "commit", commit: typeof value === "string" ? value : "HEAD" };
+  if (args.has("commit")) {
+    return { scope: "commit", commit: args.str("commit") ?? "HEAD" };
   }
   const positional = args.positionals[0];
   if (positional && ["staged", "unstaged", "worktree", "branch"].includes(positional)) {
@@ -172,10 +194,10 @@ function buildDoc(args: Args) {
   if (!isGitRepo(cwd)) fail("Not a git repository.");
 
   const { scope, base, commit } = scopeFrom(args);
-  const stubs = (args.flags.get("stubs") as StubMode) ?? "hunk";
-  const contextFlag = args.flags.get("context");
-  const paths = collect(args, "path");
-  const untracked = !args.flags.has("no-untracked");
+  const stubs = (args.str("stubs") as StubMode) ?? "hunk";
+  const contextFlag = args.str("context");
+  const paths = args.all("path");
+  const untracked = !args.has("no-untracked");
 
   let result = buildSkeleton({
     scope,
@@ -184,25 +206,25 @@ function buildDoc(args: Args) {
     cwd,
     paths,
     untracked,
-    context: typeof contextFlag === "string" ? Number(contextFlag) : undefined,
+    context: contextFlag ? Number(contextFlag) : undefined,
     stubs,
-    title: str(args.flags.get("title")),
-    author: str(args.flags.get("author")) ?? process.env.CREV_AUTHOR,
-    checks: collect(args, "check"),
+    title: args.str("title"),
+    author: args.str("author") ?? process.env.CREV_AUTHOR,
+    checks: args.all("check"),
   });
 
   // `--worktree` is the friendliest default, but an agent that has already
   // staged its work should not be told there is nothing to review.
-  if (!result.diff.files.length && scope === "worktree" && !args.flags.has("worktree")) {
+  if (!result.diff.files.length && scope === "worktree" && !args.has("worktree")) {
     result = buildSkeleton({
       scope: "staged",
       cwd,
       paths,
       untracked,
       stubs,
-      title: str(args.flags.get("title")),
-      author: str(args.flags.get("author")) ?? process.env.CREV_AUTHOR,
-      checks: collect(args, "check"),
+      title: args.str("title"),
+      author: args.str("author") ?? process.env.CREV_AUTHOR,
+      checks: args.all("check"),
     });
   }
 
@@ -214,7 +236,7 @@ function cmdNew(args: Args) {
   if (!diff.files.length) noChanges(doc.meta.scope);
 
   const text = serializeCrev(doc);
-  const out = str(args.flags.get("out")) ?? str(args.flags.get("o"));
+  const out = args.str("out", "o");
 
   if (out === "-") {
     process.stdout.write(text);
@@ -301,8 +323,8 @@ function cmdValidate(args: Args) {
   const paths = args.positionals;
   if (!paths.length) fail("Usage: crev validate <file...>");
   const cwd = repoRoot() || process.cwd();
-  const minCoverage = args.flags.get("min-coverage");
-  const json = args.flags.has("json");
+  const minCoverage = args.str("min-coverage");
+  const json = args.has("json");
 
   let worstExit = 0;
   const payload: unknown[] = [];
@@ -311,9 +333,9 @@ function cmdValidate(args: Args) {
     const doc = loadDoc(path);
     const result = validateDocument(doc, {
       cwd,
-      strict: args.flags.has("strict"),
-      skipStaleness: args.flags.has("no-staleness"),
-      minCoverage: typeof minCoverage === "string" ? Number(minCoverage) : undefined,
+      strict: args.has("strict"),
+      skipStaleness: args.has("no-staleness"),
+      minCoverage: minCoverage ? Number(minCoverage) : undefined,
     });
 
     if (json) {
@@ -370,8 +392,8 @@ function cmdVerify(args: Args) {
   if (!path) fail("Usage: crev verify <file> [--write]");
   const cwd = repoRoot() || process.cwd();
   const doc = loadDoc(path);
-  const filter = str(args.flags.get("filter"));
-  const json = args.flags.has("json");
+  const filter = args.str("filter");
+  const json = args.has("json");
 
   const results = verifyDocument(doc, {
     cwd,
@@ -397,7 +419,7 @@ function cmdVerify(args: Args) {
     );
   }
 
-  if (args.flags.has("write")) {
+  if (args.has("write")) {
     writeFileSync(path, serializeCrev(doc));
     if (!json) process.stdout.write(`${c.green("✓")} updated ${path} with real results\n`);
   }
@@ -426,7 +448,7 @@ function cmdStats(args: Args) {
   if (!path) fail("Usage: crev stats <file>");
   const doc = loadDoc(path);
   const stats = computeStats(doc);
-  if (args.flags.has("json")) {
+  if (args.has("json")) {
     process.stdout.write(`${JSON.stringify(stats, null, 2)}\n`);
     return;
   }
@@ -477,7 +499,7 @@ function cmdFmt(args: Args) {
   if (!path) fail("Usage: crev fmt <file> [--write]");
   const doc = loadDoc(path);
   const text = serializeCrev(doc);
-  if (args.flags.has("write")) {
+  if (args.has("write")) {
     writeFileSync(path, text);
     process.stdout.write(`${c.green("✓")} formatted ${path}\n`);
   } else {
@@ -500,16 +522,6 @@ function cmdView() {
 }
 
 /* helpers */
-
-function collect(args: Args, name: string): string[] {
-  const value = args.flags.get(name);
-  if (typeof value === "string") return [value];
-  return [];
-}
-
-function str(value: string | true | undefined): string | undefined {
-  return typeof value === "string" ? value : undefined;
-}
 
 function slug(title: string): string {
   return (

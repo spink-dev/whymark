@@ -64,7 +64,9 @@ export function validateDocument(
       });
     }
 
-    if (options.skipStaleness || !file.newSha) continue;
+    // A review of a past commit describes a blob that cannot change, so
+    // comparing it to the working tree would report every later edit as decay.
+    if (options.skipStaleness || !file.newSha || doc.meta.scope === "commit") continue;
     if (file.status === "deleted") continue;
 
     const abs = join(cwd, file.path);
