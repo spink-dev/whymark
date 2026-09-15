@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -10,7 +11,7 @@ import {
 } from "react";
 import { FileDiff, FilePlus2, FileMinus2, FileSymlink, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { layoutCards, type Anchor } from "@/lib/crev/align";
+import { layoutRail, type Anchor } from "@/lib/crev/align";
 import type { Note } from "@/lib/crev/types";
 import type { FileVM, RowVM } from "@/lib/view-model";
 import { KIND_META } from "./meta";
@@ -95,22 +96,12 @@ export function FilePanel({
     return () => observer.disconnect();
   }, [measure, notes, compact]);
 
-  const tops = useMemo(
-    () =>
-      layoutCards(
-        anchors,
-        (id) => heights[id] ?? 132,
-        (row) => row * LINE_H,
-        CARD_GAP,
-      ),
-    [anchors, heights],
+  const rail = useMemo(
+    () => layoutRail(anchors, (id) => heights[id] ?? 132, rows.length, LINE_H, CARD_GAP),
+    [anchors, heights, rows.length],
   );
-
-  const codeHeight = rows.length * LINE_H;
-  const railHeight = Math.max(
-    codeHeight,
-    ...anchors.map((a) => (tops.get(a.noteId) ?? 0) + (heights[a.noteId] ?? 132) + 4),
-  );
+  const { tops, padding, offsets } = rail;
+  const railHeight = rail.height;
 
   const highlighted = hovered ?? activeNoteId;
   const highlightKind = highlighted
@@ -195,24 +186,30 @@ export function FilePanel({
         >
           <div className="crev-scroll overflow-x-auto border-r border-border/40">
             <div className="crev-code w-max min-w-full">
-              {rows.map((row) => (
-                <CodeRow
-                  key={row.key}
-                  row={row}
-                  mode={mode}
-                  notes={notes}
-                  highlighted={highlighted}
-                  highlightKind={highlightKind}
-                  onHover={setHovered}
-                  onActivate={onActivate}
-                />
-              ))}
+              {rows.map((row, rowIndex) => {
+                const pad = padding.get(rowIndex);
+                return (
+                  <Fragment key={row.key}>
+                    {pad ? <div style={{ height: pad }} aria-hidden /> : null}
+                    <CodeRow
+                      row={row}
+                      mode={mode}
+                      notes={notes}
+                      highlighted={highlighted}
+                      highlightKind={highlightKind}
+                      onHover={setHovered}
+                      onActivate={onActivate}
+                    />
+                  </Fragment>
+                );
+              })}
             </div>
           </div>
 
           <Connectors
             anchors={anchors}
             tops={tops}
+            offsets={offsets}
             heights={heights}
             notes={notes}
             highlighted={highlighted}
@@ -304,6 +301,7 @@ function CodeRow({
     return (
       <div
         className={cn("crev-row flex", covered && "cursor-pointer")}
+        data-notes={row.noteIds.join(" ") || undefined}
         onMouseEnter={onEnter}
         onMouseLeave={onLeave}
         onClick={onClick}
@@ -329,6 +327,7 @@ function CodeRow({
   return (
     <div
       className={cn("crev-row flex", covered && "cursor-pointer")}
+      data-notes={row.noteIds.join(" ") || undefined}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
       onClick={onClick}
@@ -418,6 +417,7 @@ function SplitCell({ cell, side }: { cell?: RowVM | null; side: "add" | "del" })
 function Connectors({
   anchors,
   tops,
+  offsets,
   heights,
   notes,
   highlighted,
@@ -425,6 +425,7 @@ function Connectors({
 }: {
   anchors: Anchor[];
   tops: Map<string, number>;
+  offsets: number[];
   heights: Record<string, number>;
   notes: Note[];
   highlighted: string | null;
@@ -441,8 +442,8 @@ function Connectors({
         const note = notes.find((n) => n.id === anchor.noteId);
         if (!note) return null;
         const color = KIND_META[note.kind].color;
-        const top = anchor.startRow * LINE_H;
-        const bottom = (anchor.endRow + 1) * LINE_H;
+        const top = anchor.startRow * LINE_H + (offsets[anchor.startRow] ?? 0);
+        const bottom = (anchor.endRow + 1) * LINE_H + (offsets[anchor.endRow] ?? 0);
         const cardTop = tops.get(note.id) ?? top;
         const cardHeight = heights[note.id] ?? 132;
         const active = highlighted === note.id;

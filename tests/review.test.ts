@@ -3,7 +3,13 @@ import { parseCrev } from "../src/lib/crev/parse";
 import { parseUnifiedDiff } from "../src/lib/crev/git";
 import { computeStats } from "../src/lib/crev/stats";
 import { validateDocument } from "../src/lib/crev/validate";
-import { anchorsFor, buildRows, buildSplitRows, layoutCards } from "../src/lib/crev/align";
+import {
+  anchorsFor,
+  buildRows,
+  buildSplitRows,
+  layoutCards,
+  layoutRail,
+} from "../src/lib/crev/align";
 
 const DOC = `---
 crev: 1
@@ -192,5 +198,28 @@ describe("alignment", () => {
     expect(tops.get("n1")).toBe(20);
     // n2 wants row 6 (=140) but n1 is 200 tall, so it is pushed below it.
     expect(tops.get("n2")).toBe(230);
+  });
+
+  it("opens space in the code so every card starts level with its own line", () => {
+    const rows = buildRows(file);
+    const anchors = anchorsFor(rows, file.notes);
+    const rail = layoutRail(anchors, () => 200, rows.length, 20, 10);
+
+    for (const anchor of anchors) {
+      const lineTop = anchor.startRow * 20 + rail.offsets[anchor.startRow];
+      expect(rail.tops.get(anchor.noteId)).toBe(lineTop);
+    }
+
+    // Padding is only opened where a tall card would otherwise have collided.
+    expect([...rail.padding.values()].every((pad) => pad > 0)).toBe(true);
+    expect(rail.height).toBeGreaterThan(rows.length * 20);
+  });
+
+  it("leaves the code untouched when the cards already fit", () => {
+    const rows = buildRows(file);
+    const anchors = anchorsFor(rows, file.notes);
+    const rail = layoutRail(anchors, () => 8, rows.length, 20, 10);
+    expect(rail.padding.size).toBe(0);
+    expect(rail.height).toBe(rows.length * 20);
   });
 });

@@ -210,3 +210,58 @@ export function layoutCards(
   }
   return tops;
 }
+
+export interface RailLayout {
+  /** Top offset, in pixels, of each card. */
+  tops: Map<string, number>;
+  /** Blank space to open above a row so its card can stay level with it. */
+  padding: Map<number, number>;
+  /** Pixels of padding inserted at or above each row, as a running total. */
+  offsets: number[];
+  height: number;
+}
+
+/**
+ * Stacking cards alone makes a tall annotation push every later one hundreds of
+ * pixels below the code it describes. Instead, whenever a card cannot start at
+ * its own first line, the same distance is opened in the code column, so a card
+ * and its lines always begin on the same horizontal line.
+ */
+export function layoutRail(
+  anchors: Anchor[],
+  measure: (noteId: string) => number,
+  rowCount: number,
+  lineHeight: number,
+  gap = 10,
+): RailLayout {
+  const tops = new Map<string, number>();
+  const padding = new Map<number, number>();
+  let shift = 0;
+  let cursor = -Infinity;
+
+  for (const anchor of anchors) {
+    const lineTop = anchor.startRow * lineHeight + shift;
+    const top = Math.max(lineTop, cursor + gap);
+    const pad = top - lineTop;
+    if (pad > 0.5) {
+      padding.set(anchor.startRow, (padding.get(anchor.startRow) ?? 0) + pad);
+      shift += pad;
+    }
+    tops.set(anchor.noteId, top);
+    cursor = top + measure(anchor.noteId);
+  }
+
+  const offsets: number[] = [];
+  let running = 0;
+  for (let row = 0; row < rowCount; row++) {
+    running += padding.get(row) ?? 0;
+    offsets.push(running);
+  }
+
+  return {
+    tops,
+    padding,
+    offsets,
+    height: Math.max(rowCount * lineHeight + shift, cursor === -Infinity ? 0 : cursor),
+  };
+}
