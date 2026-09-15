@@ -33,6 +33,13 @@ what you actually read, and `inference` when there was nothing. `verify:` claims
 ## Working on this repository
 
 - `npm test` (vitest), `npm run typecheck`, `npm run lint` before you finish.
+- `npm run test:ui` drives a real browser against a running `npm run dev`. It is
+  the only check that catches layout regressions — a server-rendered page looks
+  correct while every control is dead — and it exercises the apply path against
+  `examples/retry.ts`, restoring the file afterwards.
 - The core library must stay free of React/Next imports; it runs in the CLI too.
+- `src/lib/whymark/edit.ts` rewrites real files. It assumes the file on disk is
+  byte-identical to the diff's new side; callers must confirm that by comparing
+  `newSha` first, which is what makes new-side line numbers safe to index by.
 - Changing the format means changing `spec/whymark-v1.md`, the parser, the
   serializer, the skill, and the tests together.

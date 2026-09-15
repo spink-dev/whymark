@@ -6,7 +6,7 @@
  * pull request page. These controls collect those decisions; the review view
  * writes them to the working tree.
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Check,
   Loader2,
@@ -167,14 +167,15 @@ export function HunkEditor({
   onCancel: () => void;
   onSave: (text: string) => void;
 }) {
+  // The caller remounts this by key when a different hunk is opened, so the
+  // starting text is simply initial state rather than something to sync.
   const [text, setText] = useState(initial);
-  useEffect(() => {
-    if (open) setText(initial);
-  }, [open, initial]);
 
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? undefined : onCancel())}>
-      <DialogContent className="max-w-3xl">
+      {/* The width override needs the `sm:` variant too, or the primitive's own
+          `sm:max-w-sm` wins and the code is squeezed into a phone-width box. */}
+      <DialogContent className="w-[min(92vw,980px)] max-w-none sm:max-w-none">
         <DialogHeader>
           <DialogTitle className="font-mono text-[13px]">{path}</DialogTitle>
           <DialogDescription>
@@ -188,8 +189,11 @@ export function HunkEditor({
           value={text}
           onChange={(event) => setText(event.target.value)}
           spellCheck={false}
-          rows={Math.min(24, Math.max(6, text.split("\n").length + 1))}
-          className="w-full resize-y rounded-md border border-border/70 bg-background/60 p-3 font-mono text-[12.5px] leading-relaxed outline-none focus:border-border"
+          // Code must not soft-wrap here: a wrapped line reads as a different
+          // line from the one in the diff above it.
+          wrap="off"
+          rows={Math.min(26, Math.max(8, text.split("\n").length + 1))}
+          className="w-full resize-y overflow-auto rounded-md border border-border/70 bg-background/60 p-3 font-mono text-[12.5px] leading-relaxed whitespace-pre outline-none focus:border-border"
         />
 
         {error ? (

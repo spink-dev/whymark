@@ -151,6 +151,13 @@ Cover every added line, but say something worth reading:
   rather than pretending you reasoned about each line.
 - What you did **not** do: tests you skipped, cases you left unhandled.
 
+The reviewer can act on your annotations: hovering a changed line offers to drop
+it, and a reviewer working locally applies those decisions straight to their
+working tree. Address a note to the tightest range that carries its point. A
+debug line you should not have left in, or a status you widened on a hunch, is
+worth its own single-line note — that is the line someone will reject, and a note
+spanning twenty lines gives them nothing to act on.
+
 ## Anti-patterns
 
 - Narrating the code (`what:` on every line) instead of explaining it.

@@ -408,6 +408,7 @@ export function FilePanel({
       </div>
 
       <HunkEditor
+        key={editingKey ?? "closed"}
         open={Boolean(editingHunk)}
         path={file.path}
         range={editingHunk?.range ?? null}
@@ -445,7 +446,10 @@ function UnifiedBody({
   ...rowProps
 }: RowProps & { rows: DisplayRow[]; padding: Map<number, number> }) {
   return (
-    <div className="whymark-scroll overflow-x-auto border-r border-border/40">
+    <div
+      data-whymark-body="unified"
+      className="whymark-scroll overflow-x-auto border-r border-border/40"
+    >
       <div className="whymark-code w-max min-w-full">
         {rows.map((row, index) => (
           <Fragment key={row.key}>
@@ -470,6 +474,7 @@ function SplitBody({
 }: RowProps & { rows: DisplayRow[]; padding: Map<number, number> }) {
   return (
     <div
+      data-whymark-body="split"
       className="grid border-r border-border/40"
       style={{ gridTemplateColumns: "minmax(0,1fr) 1px minmax(0,1fr)" }}
     >
@@ -491,7 +496,7 @@ function SplitColumn({
   padding: Map<number, number>;
 }) {
   return (
-    <div className="whymark-scroll min-w-0 overflow-x-auto">
+    <div data-whymark-side={side} className="whymark-scroll min-w-0 overflow-x-auto">
       <div className="whymark-code w-max min-w-full">
         {rows.map((row, index) => (
           <Fragment key={row.key}>

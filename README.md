@@ -114,6 +114,29 @@ claiming a passing test that fails.
 `/inspect` renders a `.whymark` document pasted straight from a chat, without
 saving it. `/format` renders the specification.
 
+### Deciding, and editing, without leaving the page
+
+Reading a review usually ends in a judgement: most of this is fine, that line is
+not. Since the viewer is already running against your checkout, it can act on
+that judgement directly instead of sending you to a pull request page.
+
+- **Discard a line.** Hover any changed line and use the control in the gutter:
+  `×` drops an added line, `↩` puts a removed one back. The line is struck
+  through until you apply.
+- **Discard a hunk**, or **edit** it: `edit` opens the hunk's new text in an
+  editor and writes your version to the file.
+- **Apply** collects the decisions across every file and writes them, then tells
+  you what changed on disk.
+
+Two guards keep that safe. The path must resolve inside the repository, and the
+file must still hash to exactly the version the review recorded — a file that
+changed underneath you is shown `read-only` rather than silently overwritten.
+Nothing is written until you press apply, and nothing is committed for you.
+
+`reviews/retry-backoff.whymark` is a live example: it reviews a real change to
+`examples/retry.ts`, and two parts of that change are deliberately worth
+rejecting. `git checkout examples/` undoes whatever you apply.
+
 ## Using it with an agent
 
 The same instructions are installed for every agent that reads a skill
@@ -161,14 +184,18 @@ Scopes: `--unstaged`, `--staged`, `--worktree`, `--branch [base]`,
 ```
 spec/whymark-v1.md              the format: grammar, selectors, field vocabulary
 src/lib/whymark/                parser, serializer, git importer, metrics,
-                             validator, verification runner  (no framework deps)
+                             validator, verification runner, decision engine
+                             (no framework deps)
 src/cli/whymark.ts              the CLI
 src/app, src/components      the viewer (Next.js, Tailwind, shadcn/ui, shiki)
 .agents/skills/whymark/         the skill, canonical copy
 .cursor/skills/whymark/         the same skill for Cursor
 prompts/whymark-author.md       copy-paste prompt for any other agent
 reviews/*.whymark               reviews the viewer lists
-tests/                       parser, alignment, metrics, validation
+examples/                    a real file to review, so the reviewer has
+                             something it can actually edit
+tests/                       parser, alignment, metrics, validation, decisions
+tests/e2e/viewer.mjs         browser checks: layout, alignment, apply path
 ```
 
 The library in `src/lib/whymark` has no dependency on React or Next and only uses

@@ -1,0 +1,137 @@
+---
+whymark: 1
+title: Back off exponentially with full jitter between retries
+author: claude-opus-5 (cursor)
+date: 2026-09-15T22:55:00Z
+scope: commit
+base: HEAD^@e071dae
+head: HEAD@1c38faf
+repo: whymark
+tags:
+  - example
+  - reliability
+summary: |
+  A fixed 200ms delay sends every retrying client back at the same instant, so
+  a service that is shedding load gets a synchronized second wave and sheds
+  that too. Retries now double their window per attempt and pick a random wait
+  inside it, capped so a single call cannot stall a request indefinitely.
+
+  This file really exists in the repo, so this review is live: the controls in
+  the gutter discard an added line or put a removed one back, and `edit` writes
+  your own version straight to `examples/retry.ts`. Two parts of the change are
+  deliberately worth rejecting — a leftover debug log and a widened list of
+  retryable statuses. `git checkout examples/` undoes anything you apply.
+checks:
+  - cmd: npm test -- example-retry
+    status: pass
+    detail: 7 tests, including that no wait exceeds the cap
+    ran: 2026-09-15T22:54:53Z
+  - cmd: npm run typecheck
+    status: pass
+    ran: 2026-09-15T22:54:20Z
+review:
+  status: pending
+---
+
+@file examples/retry.ts modified +13 -3 oldsha=67c802a newsha=7d38fff
+@@ -10,23 +10,31 @@
+ export interface RetryOptions {
+   attempts?: number;
+   delayMs?: number;
++  /** Cap on any single wait, so a long backoff cannot stall a request forever. */
++  maxDelayMs?: number;
+ }
+ 
+-/** Retryable, in this codebase, means the call is safe to send again. */
+ export function isRetryable(error: unknown): boolean {
+   if (!(error instanceof Error)) return false;
+   const status = (error as { status?: number }).status;
+-  return status === 429 || status === 503;
++  return status === 429 || status === 503 || status === 502 || status === 504;
+ }
+ 
+ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+ 
++/** Full jitter: every client picks its own wait inside the window. */
++function backoff(attempt: number, base: number, cap: number): number {
++  const window = Math.min(cap, base * 2 ** (attempt - 1));
++  return Math.random() * window;
++}
++
+ export async function withRetry<T>(
+   operation: () => Promise<T>,
+   options: RetryOptions = {},
+ ): Promise<T> {
+   const attempts = options.attempts ?? 3;
+   const delayMs = options.delayMs ?? 200;
++  const maxDelayMs = options.maxDelayMs ?? 5_000;
+   let lastError: unknown;
+ 
+   for (let attempt = 1; attempt <= attempts; attempt++) {
+@@ -35,7 +43,9 @@ export async function withRetry<T>(
+     } catch (error) {
+       lastError = error;
+       if (!isRetryable(error) || attempt === attempts) break;
+-      await sleep(delayMs);
++      const wait = backoff(attempt, delayMs, maxDelayMs);
++      console.log(`[retry] attempt ${attempt} failed, waiting ${wait}ms`);
++      await sleep(wait);
+     }
+   }
+ 
+@note +13..14 kind=intent confidence=0.9
+why: An unbounded doubling window reaches 25 seconds by the sixth attempt, which
+  outlives most request deadlines and turns a retry into a hang. The cap is an
+  option rather than a constant because a background job can afford a longer
+  wait than a request handler.
+source: file:examples/retry.ts:35 — the default of 5s is below the 10s deadline
+  the callers in this example assume
+verify: cmd:"npm test -- example-retry" => pass (a run with a 400ms cap never
+  waits longer than 400ms)
+
+@note -15 kind=todo risk=low confidence=0.8
+why: The comment was dropped because the function no longer only answers "is
+  this safe to send again" — but that sentence was the only place the rule was
+  written down, and removing it loses the rule.
+source: inference — no instruction covered the comment; it was removed as a
+  side effect of editing the line below it
+verify: none => unknown
+todo: put it back, or restate the rule where the widened status list is decided
+
+@note +20 kind=risk risk=medium confidence=0.55
+why: 502 and 504 were added because both are usually a proxy failing in front of
+  a healthy service, so the call is worth repeating. But a proxy that already
+  forwarded the request returns the same 502, which makes a retry unsafe for any
+  caller that is not idempotent. This is the line to discard if yours is not.
+source: inference — pattern-matched from common retry policies, not from
+  anything in this repo
+verify: none => unverified (nothing here proves a 502 from this service means
+  the request was not applied)
+alt: rejected treating 500 as retryable too — a 500 can mean the write landed
+  and then the response failed, so repeating it can double-apply
+
+@note +25..29 kind=intent confidence=0.9
+why: Full jitter, rather than exponential-with-half-jitter, because the point is
+  to de-correlate clients that all failed at the same moment. Picking uniformly
+  from the whole window spreads the second wave widest for the same mean wait.
+source: url:https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/
+  — full jitter measured as the strongest de-correlation of the simple variants
+source: file:tests/example-retry.test.ts:57 — the bound is asserted, not assumed
+verify: cmd:"npm test -- example-retry" => pass (7 tests)
+verify: type:"npm run typecheck" => pass
+
+@note +37 kind=assumption confidence=0.6
+why: 5 seconds is a guess at "long enough to outlast a restart, short enough
+  that a caller has not given up".
+source: inference — no deadline or SLO exists in this example to derive it from
+verify: none => unknown
+todo: set this from the caller's own deadline once there is one to read
+
+@note +47 kind=todo risk=low confidence=0.95
+why: This log was added while checking that the windows grew as intended, and it
+  should not have survived. It prints on every retry of every call, has no
+  logger behind it, and leaks timing into stdout.
+source: inference — debugging aid, not a requirement
+verify: none => unknown
+todo: discard this line — the gutter control on the right removes it from your
+  working copy
