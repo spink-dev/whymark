@@ -36,8 +36,8 @@ export default function TermsPage() {
         <p>
           Requesting the website itself still produces ordinary web logs on the
           host (Vercel): timestamp, IP address, user-agent, and the URL of the
-          page or asset. Those logs do not include the text of a file you opened
-          in the viewer.
+          page or asset. Vercel Web Analytics also records page views. Neither
+          includes the text of a file you opened in the viewer.
         </p>
       </LegalSection>
 

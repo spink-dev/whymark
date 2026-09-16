@@ -46,8 +46,10 @@ export default function PrivacyPage() {
           that body is not sent.
         </p>
         <p>
-          We do not run a separate analytics product, ad network, or third-party
-          tracker on this site.
+          The site also loads Vercel Web Analytics. That records page views
+          (path, referrer, and a coarse visitor identifier) in Vercel’s
+          dashboard. It does not receive the body of a <code>.whymark</code>
+          file you opened. There is no ad network or other third-party tracker.
         </p>
       </LegalSection>
 
