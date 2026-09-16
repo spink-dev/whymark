@@ -54,7 +54,10 @@ export function LineControl({
     return <span className="w-5 shrink-0" aria-hidden />;
   }
 
-  const decided = verdict !== "kept";
+  // "edited" means part of the line was taken back, which this control did not
+  // do — it would drop the whole line — so it reads as unpressed but stays lit.
+  const decided = verdict === "discarded" || verdict === "restored";
+  const touched = verdict !== "kept";
   const label =
     kind === "add"
       ? verdict === "discarded"
@@ -78,7 +81,7 @@ export function LineControl({
       // control that turns reading a review into deciding on it.
       className={cn(
         "flex h-full w-5 shrink-0 items-center justify-center transition-colors",
-        decided
+        touched
           ? "opacity-100"
           : "opacity-55 hover:opacity-100 hover:bg-foreground/10 group-hover/row:opacity-85",
       )}

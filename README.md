@@ -124,6 +124,14 @@ that judgement directly instead of sending you to a pull request page.
   `×` drops an added line, `↩` puts a removed one back. The line is struck
   through until you apply. `x` does the same for everything the selected
   annotation covers, so `j` `x` `j` `x` works as a review pass.
+- **Revert one part of a line.** A line is often too coarse: the same line can
+  carry a rename worth keeping and a constant that is not. Replaced lines are
+  compared word by word, and each differing part is its own control — click the
+  highlighted `250` and it shows `200` in place, which is what will be written.
+  The rest of the line, and the rest of the change, stay as the AI wrote them.
+- **Restore a removal on its own.** `↩` on a removed line brings it back
+  whether or not you keep the code that replaced it; the two decisions are
+  independent.
 - **Discard a hunk**, or **edit** it: `edit` opens the hunk's new text in an
   editor and writes your version to the file.
 - **Apply** collects the decisions across every file and writes them, then tells
@@ -134,9 +142,15 @@ file must still hash to exactly the version the review recorded — a file that
 changed underneath you is shown `read-only` rather than silently overwritten.
 Nothing is written until you press apply, and nothing is committed for you.
 
+Reverting a part edits inside a line, so it can leave code that does not
+compile — the same as any hand edit. The line on screen always reads exactly as
+the line that will be written, so what you get is what you saw.
+
 `reviews/retry-backoff.whymark` is a live example: it reviews a real change to
-`examples/retry.ts`, and two parts of that change are deliberately worth
-rejecting. `git checkout examples/` undoes whatever you apply.
+`examples/retry.ts`, and three parts of that change are deliberately worth
+rejecting — a leftover debug log, a widened list of retryable statuses, and a
+default nudged from 200ms to 250ms on the same line as a rename worth keeping.
+`git checkout examples/` undoes whatever you apply.
 
 ## Using it with an agent
 

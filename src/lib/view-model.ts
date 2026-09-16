@@ -150,6 +150,7 @@ function markInlineParts(rows: RowVM[], file: FileSection) {
       const parts = partnered === undefined ? undefined : byNew.get(partnered);
       if (!parts) continue;
       row.pairedLine = partnered;
+      row.parts = parts;
       row.intra = spanOf(parts, "old");
     }
   }

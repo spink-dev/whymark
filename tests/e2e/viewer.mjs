@@ -3,7 +3,7 @@
 // looks right while every control is dead, so these assert behaviour in a real
 // browser. Usage: npm run dev, then WHYMARK_URL=http://127.0.0.1:43917 node tests/e2e/viewer.mjs
 import { chromium } from "playwright";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const BASE = process.env.WHYMARK_URL ?? "http://127.0.0.1:43917";
@@ -373,6 +373,72 @@ if (gitDirty()) {
 
     execFileSync("git", ["checkout", "--", EXAMPLE]);
     check("decide flow: example restored", gitDirty() === "");
+  }
+
+  // --- reverting one part of a changed line ------------------------------
+  // The unit a reviewer wants is often smaller than a line: this change renamed
+  // a local (worth keeping) and moved a default from 200ms to 250ms (not) on the
+  // same line.
+  await page.goto(`${BASE}/r/retry-backoff`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1200);
+
+  const partRow = page.locator(".whymark-row", { hasText: "baseDelayMs = options" }).first();
+  await partRow.scrollIntoViewIfNeeded();
+  const parts = partRow.locator("button[aria-label^='Revert this part']");
+  const partCount = await parts.count();
+  check(
+    "parts: a line changed in two places offers two separate reverts",
+    partCount === 2,
+    `${partCount} parts`,
+  );
+
+  const numberPart = partRow.getByRole("button", { name: /Revert this part to: 200/ });
+  if ((await numberPart.count()) === 1) {
+    await numberPart.click();
+    await page.waitForTimeout(500);
+
+    const shown = await page.evaluate(() => {
+      const row = [...document.querySelectorAll(".whymark-row")].find((candidate) =>
+        candidate.textContent?.includes("baseDelayMs = options"),
+      );
+      const pressed = row?.querySelector("button[aria-label^='Keep this part']");
+      return {
+        // The line on screen must read as the line that will be written.
+        preview: pressed?.textContent?.trim(),
+        rename: row?.textContent?.includes("baseDelayMs"),
+        summary: document.body.innerText.includes("revert 1 part"),
+      };
+    });
+    check(
+      "parts: the reverted part previews the old text while the rename stays",
+      shown.preview === "200" && shown.rename && shown.summary,
+      JSON.stringify(shown),
+    );
+    await page.screenshot({ path: `${OUT}/pw-10-part-revert.png` });
+
+    await page.getByRole("button", { name: /^apply$/i }).click();
+    await page.waitForTimeout(2500);
+
+    const line = readFileSync(EXAMPLE, "utf8")
+      .split("\n")
+      .find((candidate) => candidate.includes("options.delayMs"));
+    check(
+      "parts: apply writes the hybrid line, not the whole old line",
+      line === "  const baseDelayMs = options.delayMs ?? 200;",
+      `wrote "${line}"`,
+    );
+
+    const numstat = execFileSync("git", ["diff", "--numstat", "--", EXAMPLE], {
+      encoding: "utf8",
+    });
+    check(
+      "parts: nothing else in the file moved",
+      numstat.trim().startsWith("1\t1\t"),
+      `git numstat "${numstat.trim()}"`,
+    );
+
+    execFileSync("git", ["checkout", "--", EXAMPLE]);
+    check("parts: example restored", gitDirty() === "");
   }
 
   // --- deciding from the keyboard ---------------------------------------

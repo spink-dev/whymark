@@ -41,5 +41,9 @@ what you actually read, and `inference` when there was nothing. `verify:` claims
 - `src/lib/whymark/edit.ts` rewrites real files. It assumes the file on disk is
   byte-identical to the diff's new side; callers must confirm that by comparing
   `newSha` first, which is what makes new-side line numbers safe to index by.
+- `src/lib/whymark/inline.ts` decides which removed line each added line
+  replaced, and splits the pair into revertible parts. The viewer and the apply
+  path must read the same parts from it: highlighting a part the writer cannot
+  write, or writing one the reader never saw, is worse than offering neither.
 - Changing the format means changing `spec/whymark-v1.md`, the parser, the
   serializer, the skill, and the tests together.

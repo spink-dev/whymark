@@ -692,6 +692,7 @@ function UnifiedRow({
           intra={line.intra}
           tone={row.kind === "add" ? "add" : "del"}
           parts={line.parts}
+          side={row.kind === "del" ? "old" : "new"}
           handlers={partHandlers(line, verdict, canDecide, decisions, onTogglePart)}
         />
       </span>
@@ -809,6 +810,7 @@ function SplitRow({
           intra={cell.intra}
           tone={side}
           parts={cell.parts}
+          side={side === "del" ? "old" : "new"}
           handlers={partHandlers(cell, verdict, canDecide, decisions, onTogglePart)}
         />
       </span>

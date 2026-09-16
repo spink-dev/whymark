@@ -30,18 +30,28 @@ export function Tokens({
   intra,
   tone,
   parts,
+  side = "new",
   handlers,
 }: {
   tokens: Token[];
   intra?: [number, number];
   tone?: "add" | "del";
   parts?: InlinePart[];
+  side?: "old" | "new";
   handlers?: PartHandlers;
 }) {
   if (!tokens.length) return <span>{"\u00a0"}</span>;
 
-  if (parts && handlers) {
-    return <PartedLine tokens={tokens} parts={parts} handlers={handlers} />;
+  if (parts?.some((part) => part.changed)) {
+    return (
+      <PartedLine
+        tokens={tokens}
+        parts={parts}
+        side={side}
+        tone={tone}
+        handlers={handlers}
+      />
+    );
   }
 
   if (!intra) {
@@ -101,24 +111,46 @@ export function Tokens({
   return <>{nodes}</>;
 }
 
-/** A replaced line drawn part by part, with the changed ones clickable. */
+/**
+ * A replaced line drawn part by part. On the new side the changed parts are
+ * clickable; on the old side they are the same parts, marked, so both columns
+ * agree about what changed.
+ */
 function PartedLine({
   tokens,
   parts,
+  side,
+  tone,
   handlers,
 }: {
   tokens: Token[];
   parts: InlinePart[];
-  handlers: PartHandlers;
+  side: "old" | "new";
+  tone?: "add" | "del";
+  handlers?: PartHandlers;
 }) {
-  const reverted = new Set(handlers.reverted);
+  const reverted = new Set(handlers?.reverted ?? []);
+  const bounds = (part: InlinePart): [number, number] =>
+    side === "new" ? [part.newStart, part.newEnd] : [part.oldStart, part.oldEnd];
 
   return (
     <>
       {parts.map((part, index) => {
+        const [from, to] = bounds(part);
         if (!part.changed) {
+          return <Fragment key={index}>{slice(tokens, from, to)}</Fragment>;
+        }
+
+        const marked = cn(
+          "rounded-[2px]",
+          tone === "del" ? "bg-[var(--whymark-del-strong)]" : "bg-[var(--whymark-add-strong)]",
+        );
+
+        if (!handlers) {
           return (
-            <Fragment key={index}>{slice(tokens, part.newStart, part.newEnd)}</Fragment>
+            <span key={index} className={from === to ? undefined : marked}>
+              {slice(tokens, from, to)}
+            </span>
           );
         }
 
@@ -143,8 +175,10 @@ function PartedLine({
             className={cn(
               "rounded-[2px] whitespace-pre",
               undone
-                ? "bg-[var(--whymark-del-strong)] underline decoration-dotted decoration-1 underline-offset-2"
-                : "bg-[var(--whymark-add-strong)] hover:outline hover:outline-1 hover:outline-foreground/40",
+                ? // Its own colour: red would read as "this text is going away"
+                  // when it is the text that will stay.
+                  "bg-[color-mix(in_oklch,var(--whymark-part)_30%,transparent)] underline decoration-dotted decoration-1 underline-offset-2"
+                : cn(marked, "hover:outline hover:outline-1 hover:outline-foreground/40"),
             )}
           >
             {undone ? (
@@ -155,7 +189,7 @@ function PartedLine({
                 <span className="line-through opacity-60">{part.new}</span>
               )
             ) : (
-              slice(tokens, part.newStart, part.newEnd)
+              slice(tokens, from, to)
             )}
           </button>
         );

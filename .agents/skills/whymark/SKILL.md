@@ -151,12 +151,14 @@ Cover every added line, but say something worth reading:
   rather than pretending you reasoned about each line.
 - What you did **not** do: tests you skipped, cases you left unhandled.
 
-The reviewer can act on your annotations: hovering a changed line offers to drop
-it, and a reviewer working locally applies those decisions straight to their
-working tree. Address a note to the tightest range that carries its point. A
-debug line you should not have left in, or a status you widened on a hunch, is
-worth its own single-line note — that is the line someone will reject, and a note
-spanning twenty lines gives them nothing to act on.
+The reviewer can act on your annotations: a changed line can be dropped, a
+removed one put back, and a single changed part of a line taken back to the old
+text, all written straight to their working tree. Address a note to the tightest
+range that carries its point. A debug line you should not have left in, or a
+status you widened on a hunch, is worth its own single-line note — that is the
+line someone will reject, and a note spanning twenty lines gives them nothing to
+act on. When one line carries two changes and only one of them is defensible,
+say which part is which: that is a decision the reviewer can make in one click.
 
 ## Anti-patterns
 
