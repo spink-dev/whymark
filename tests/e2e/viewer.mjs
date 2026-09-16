@@ -441,6 +441,79 @@ if (gitDirty()) {
     check("parts: example restored", gitDirty() === "");
   }
 
+  // A part with nothing on the old side is an insertion inside a line: dropping
+  // it shortens the line instead of substituting into it. The page above applied
+  // and is now showing the file as read-only, so it has to be reloaded first.
+  await page.goto(`${BASE}/r/retry-backoff`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1000);
+  const inserted = page.locator(
+    "button[aria-label^='Drop this addition'][aria-label*='502']",
+  );
+  if ((await inserted.count()) === 1) {
+    await inserted.scrollIntoViewIfNeeded();
+    await inserted.click();
+    await page.waitForTimeout(400);
+    await page.getByRole("button", { name: /^apply$/i }).click();
+    await page.waitForTimeout(2500);
+    const statuses = readFileSync(EXAMPLE, "utf8")
+      .split("\n")
+      .find((candidate) => candidate.includes("status === 429"));
+    check(
+      "parts: dropping an inserted part shortens the line and keeps the rest",
+      statuses === "  return status === 429 || status === 503;",
+      `wrote "${statuses}"`,
+    );
+    execFileSync("git", ["checkout", "--", EXAMPLE]);
+  }
+
+  // Side by side draws the same parts in both columns, but only the new side
+  // decides: a control on the old side would write something other than the
+  // line it sits on.
+  await page.goto(`${BASE}/r/retry-backoff`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(1000);
+  await page.getByRole("button", { name: /split/i }).click();
+  await page.waitForTimeout(600);
+  const sides = await page.evaluate(() => {
+    const columns = [...document.querySelectorAll("[data-whymark-side]")];
+    const count = (side) =>
+      columns
+        .filter((column) => column.dataset.whymarkSide === side)
+        .reduce(
+          (total, column) =>
+            total + column.querySelectorAll("button[aria-label*='this part']").length,
+          0,
+        );
+    const marks = (side) =>
+      columns
+        .filter((column) => column.dataset.whymarkSide === side)
+        .reduce(
+          (total, column) =>
+            total + column.querySelectorAll("span[class*='whymark-del-strong']").length,
+          0,
+        );
+    return { newButtons: count("add"), oldButtons: count("del"), oldMarks: marks("del") };
+  });
+  check(
+    "parts: side by side marks both columns and lets only the new one decide",
+    sides.newButtons > 0 && sides.oldButtons === 0 && sides.oldMarks > 0,
+    JSON.stringify(sides),
+  );
+
+  const splitPart = page
+    .locator("[data-whymark-side='add'] button[aria-label='Revert this part to: 200']")
+    .first();
+  if ((await splitPart.count()) === 1) {
+    await splitPart.scrollIntoViewIfNeeded();
+    await splitPart.click();
+    await page.waitForTimeout(400);
+    const decided = await page.evaluate(() =>
+      document.body.innerText.includes("revert 1 part"),
+    );
+    check("parts: a part reverts from the split view too", decided);
+    await page.getByRole("button", { name: /^reset$/ }).click();
+    await page.waitForTimeout(300);
+  }
+
   // --- deciding from the keyboard ---------------------------------------
   await page.goto(`${BASE}/r/retry-backoff`, { waitUntil: "networkidle" });
   await page.waitForTimeout(1000);
