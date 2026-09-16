@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,9 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "whymark — read AI-written code with the reasoning attached",
   description:
-    "whymark is a review format that puts a unified diff on the left and line-addressed annotations on the right: why the change was made, what evidence backs it, and how it was verified.",
+    "Drop a .whymark file in your browser. Parsing and history stay on your device; nothing is uploaded.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

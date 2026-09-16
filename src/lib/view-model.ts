@@ -1,7 +1,5 @@
 import { buildRows } from "@/lib/whymark/align";
-import { isActionable } from "@/lib/whymark/edit";
 import { inlineParts, linePairs, type InlinePart } from "@/lib/whymark/inline";
-import { hashObject } from "@/lib/whymark/git";
 import { languageFor } from "@/lib/whymark/lang";
 import { computeStats, type FileStats } from "@/lib/whymark/stats";
 import type { WhymarkDocument, FileSection, Meta, Note } from "@/lib/whymark/types";
@@ -51,7 +49,10 @@ export interface ReviewVM {
   diagnostics: WhymarkDocument["diagnostics"];
 }
 
-export async function buildReviewVM(doc: WhymarkDocument): Promise<ReviewVM> {
+export async function buildReviewVM(
+  doc: WhymarkDocument,
+  options: { isWritable?: (file: FileSection) => boolean } = {},
+): Promise<ReviewVM> {
   const stats = computeStats(doc);
   const files: FileVM[] = [];
 
@@ -100,7 +101,7 @@ export async function buildReviewVM(doc: WhymarkDocument): Promise<ReviewVM> {
       lang: languageFor(file.path, file.lang),
       newSha: file.newSha,
       binary: file.binary,
-      actionable: isActionable(file, hashObject(file.path, process.cwd())),
+      actionable: options.isWritable?.(file) ?? false,
       rows: vmRows,
       notes: file.notes,
       stats: stats.perFile[index],

@@ -4,7 +4,7 @@ Paste everything below into any coding agent. `whymark prompt` generates it for 
 with the diff already embedded:
 
 ```bash
-npm run whymark -- prompt --staged      # or --unstaged / --branch main / --commit HEAD
+npx whymark prompt --staged      # or --unstaged / --branch main / --commit HEAD
 ```
 
 ---

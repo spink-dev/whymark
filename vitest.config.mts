@@ -1,8 +1,13 @@
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
+const root = dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig({
-  test: {
-    include: ["tests/**/*.test.ts"],
-    environment: "node",
+  resolve: {
+    alias: {
+      "@": join(root, "src"),
+    },
   },
 });

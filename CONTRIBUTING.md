@@ -16,10 +16,10 @@ Attach a review. That is what this repository is for, and reviewing agent output
 without one is the problem it was built to solve.
 
 ```bash
-npm run whymark -- new --branch main -o reviews/my-change.whymark
-npm run whymark -- prompt --branch main        # give this to the agent to fill in
-npm run whymark -- validate reviews/my-change.whymark --min-coverage 0.8
-npm run whymark -- verify reviews/my-change.whymark --write
+npx whymark new --branch main -o reviews/my-change.whymark
+npx whymark prompt --branch main        # give this to the agent to fill in
+npx whymark validate reviews/my-change.whymark --min-coverage 0.8
+npx whymark verify reviews/my-change.whymark --write
 ```
 
 Two things make a review worth a reviewer's time:
@@ -49,6 +49,7 @@ npm test
 npm run typecheck
 npm run lint
 npm run build
+npm run build:cli    # if you changed src/cli or src/lib/whymark
 npm run test:ui      # needs npm run dev running
 ```
 

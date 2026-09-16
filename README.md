@@ -61,18 +61,19 @@ attention there instead of reading all 400 lines equally.
 
 ## Getting started
 
-```bash
-npm install
-npm run dev            # the reviewer, at http://localhost:43917
-```
+Read a review in the browser — nothing is uploaded:
 
-Generate a review of changes you already have:
+**[whymark.x47.dev](https://whymark.x47.dev)** · drop or paste a `.whymark` file.
+History stays in that browser; you can clear it from the page.
+
+The CLI runs from any git repository with `npx` — no install, no clone:
 
 ```bash
-npm run whymark -- new --staged     --author "claude-opus-5 (cursor)"
-npm run whymark -- new --unstaged   # includes files git does not track yet
-npm run whymark -- new --branch main
-npm run whymark -- new --commit HEAD
+npx whymark help
+npx whymark new --staged     --author "claude-opus-5 (cursor)"
+npx whymark new --unstaged   # includes files git does not track yet
+npx whymark new --branch main
+npx whymark new --commit HEAD
 ```
 
 That writes `reviews/<slug>.whymark` containing the real diff and one annotation
@@ -80,9 +81,9 @@ stub per hunk. An agent fills the stubs in (see [Using it with an
 agent](#using-it-with-an-agent)), then:
 
 ```bash
-npm run whymark -- validate reviews/my-change.whymark --min-coverage 0.8
-npm run whymark -- verify   reviews/my-change.whymark --write
-npm run whymark -- stats    reviews/my-change.whymark
+npx whymark validate reviews/my-change.whymark --min-coverage 0.8
+npx whymark verify   reviews/my-change.whymark --write
+npx whymark stats    reviews/my-change.whymark
 ```
 
 `verify` is the part that matters most: it re-runs every command the review
@@ -93,7 +94,17 @@ claiming a passing test that fails.
 
 ## The viewer
 
-`npm run dev` serves every `.whymark` file in `reviews/`.
+**Hosted:** [whymark.x47.dev](https://whymark.x47.dev) — drop a file. Parsing,
+highlighting, and history run in your browser. The hosted site cannot write to a
+working tree. Terms: [/terms](https://whymark.x47.dev/terms). Privacy:
+[/privacy](https://whymark.x47.dev/privacy).
+
+**Local:** this repository, when you want to apply decisions to files on disk:
+
+```bash
+npm install
+npm run dev            # http://localhost:43917
+```
 
 - **Code left, annotations right.** Cards sit at the vertical position of the
   lines they explain, with a coloured bracket over the exact line range and a
@@ -111,8 +122,8 @@ claiming a passing test that fails.
   and `validate` both tell you when the code has moved on since the review was
   written.
 
-`/inspect` renders a `.whymark` document pasted straight from a chat, without
-saving it. `/format` renders the specification.
+The home page is the drop target. `/format` renders the specification. `/terms`
+and `/privacy` describe the hosted site. `/inspect` redirects home.
 
 ### Deciding, and editing, without leaving the page
 
@@ -163,7 +174,7 @@ directory:
   with the diff already embedded:
 
 ```bash
-npm run whymark -- prompt --staged | pbcopy
+npx whymark prompt --staged | pbcopy
 ```
 
 Ask for it in plain language once the skill is installed: *"write a whymark review
@@ -175,20 +186,26 @@ of this branch"*.
 `verify` exits non-zero when a claim is contradicted.
 
 ```bash
-npm run whymark -- validate reviews/*.whymark --min-coverage 0.8 --strict
-npm run whymark -- verify reviews/my-change.whymark
+npx whymark validate reviews/*.whymark --min-coverage 0.8 --strict
+npx whymark verify reviews/my-change.whymark
 ```
 
 ## CLI
 
+`npx whymark help` and `npx whymark help <command>` cover flags, scope, and how
+to fill `why` / `source` / `verify`. `npx whymark help annotate` is the field
+guide.
+
 | Command | Does |
 | --- | --- |
-| `whymark new [scope]` | Build a skeleton from a git diff |
-| `whymark prompt [scope]` | Print an authoring prompt with the diff embedded |
-| `whymark validate <file…>` | Structure, selector drift, staleness, coverage, stubs |
-| `whymark verify <file>` | Re-run every `verify: cmd` claim (`--write` to record) |
-| `whymark stats <file>` | Coverage and evidence metrics |
-| `whymark fmt <file>` | Rewrite in canonical form |
+| `npx whymark new [scope]` | Build a skeleton from a git diff |
+| `npx whymark prompt [scope]` | Print an authoring prompt with the diff embedded |
+| `npx whymark validate <file…>` | Structure, selector drift, staleness, coverage, stubs |
+| `npx whymark verify <file>` | Re-run every `verify: cmd` claim (`--write` to record) |
+| `npx whymark stats <file>` | Coverage and evidence metrics |
+| `npx whymark fmt <file>` | Rewrite in canonical form |
+| `npx whymark view` | How to open the visual reviewer |
+| `npx whymark help [command]` | Usage, options, and annotating rules |
 
 Scopes: `--unstaged`, `--staged`, `--worktree`, `--branch [base]`,
 `--commit <rev>`. Also `--path <pathspec>`, `--stubs hunk|file|none`,
@@ -223,13 +240,28 @@ annotations are addressed to line ranges, so `validate` can tell you an
 annotation has drifted off its code, and to blob hashes, so it can tell you the
 review is stale. And a description cannot be re-executed — `verify` can.
 
+## Hosting on Vercel
+
+The viewer is a Next.js app. Import this GitHub repository in Vercel, then:
+
+1. Add the production domain `whymark.x47.dev` in the Vercel project.
+2. Point a DNS CNAME `whymark` (on `x47.dev`) at `cname.vercel-dns.com`.
+3. Optional: set `NEXT_PUBLIC_SITE_URL=https://whymark.x47.dev`.
+
+The hosted deployment does not write a working tree. Files a visitor opens are
+parsed in the browser and stored only in that browser’s IndexedDB.
+
 ## Development
+
+After `npm install` in this checkout, `npx whymark` is the local CLI (the same
+command people run from any other repo against the published package).
 
 ```bash
 npm test           # vitest
 npm run typecheck
 npm run lint
 npm run build
+npm run build:cli  # refresh dist/whymark.mjs when the CLI changes
 npm run test:ui    # interaction checks, against a running npm run dev
 ```
 

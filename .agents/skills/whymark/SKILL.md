@@ -24,11 +24,11 @@ wrong about them.
 
 ```bash
 # pick the scope that matches what you are reviewing
-npm run whymark -- new --staged    --author "<your model name>"   # git diff --cached
-npm run whymark -- new --unstaged  --author "<your model name>"   # git diff
-npm run whymark -- new --worktree  --author "<your model name>"   # git diff HEAD (+ untracked)
-npm run whymark -- new --branch main --author "<your model name>" # whole branch
-npm run whymark -- new --commit HEAD --author "<your model name>" # one commit
+npx whymark new --staged    --author "<your model name>"   # git diff --cached
+npx whymark new --unstaged  --author "<your model name>"   # git diff
+npx whymark new --worktree  --author "<your model name>"   # git diff HEAD (+ untracked)
+npx whymark new --branch main --author "<your model name>" # whole branch
+npx whymark new --commit HEAD --author "<your model name>" # one commit
 ```
 
 That writes `reviews/<slug>.whymark` containing the real diff plus one annotation
@@ -42,9 +42,9 @@ stub per hunk. Then:
 4. Check your work:
 
 ```bash
-npm run whymark -- validate reviews/<slug>.whymark   # structure, staleness, coverage
-npm run whymark -- verify   reviews/<slug>.whymark --write   # re-runs every `verify: cmd`
-npm run whymark -- stats    reviews/<slug>.whymark
+npx whymark validate reviews/<slug>.whymark   # structure, staleness, coverage
+npx whymark verify   reviews/<slug>.whymark --write   # re-runs every `verify: cmd`
+npx whymark stats    reviews/<slug>.whymark
 ```
 
 `verify --write` re-runs each command you claimed and rewrites the file with the

@@ -34,9 +34,11 @@ interface ReviewViewProps {
   /** Absent when the document was pasted rather than read from `reviews/`. */
   slug?: string;
   issues: Diagnostic[];
+  /** When set, the back control closes this view instead of navigating home. */
+  onBack?: () => void;
 }
 
-export function ReviewView({ review, slug, issues }: ReviewViewProps) {
+export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
   const compact = !useMediaQuery("(min-width: 1180px)", true);
   const [mode, setMode] = useState<ViewMode>("unified");
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
@@ -259,13 +261,24 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
   return (
     <div className="min-h-dvh">
       <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/70 bg-[color-mix(in_oklch,var(--background)_88%,transparent)] px-4 backdrop-blur-md">
-        <Link
-          href="/"
-          className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-          aria-label="All reviews"
-        >
-          <ArrowLeft className="size-4" />
-        </Link>
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+            aria-label="Close review"
+          >
+            <ArrowLeft className="size-4" />
+          </button>
+        ) : (
+          <Link
+            href="/"
+            className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+            aria-label="Home"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+        )}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[13.5px] font-medium leading-tight">{meta.title}</h1>
           <p className="truncate font-mono text-[11px] text-muted-foreground">

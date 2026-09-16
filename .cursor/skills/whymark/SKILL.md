@@ -14,10 +14,10 @@ specified in `spec/whymark-v1.md`.
 The shape of the job, so you know what you are committing to before you read it:
 
 ```bash
-npm run whymark -- new --staged --author "<your model name>"   # writes reviews/<slug>.whymark
+npx whymark new --staged --author "<your model name>"   # writes reviews/<slug>.whymark
 # fill in summary, and every why / source / verify field; delete stubs that say nothing
-npm run whymark -- validate reviews/<slug>.whymark
-npm run whymark -- verify   reviews/<slug>.whymark --write        # re-runs your own claims
+npx whymark validate reviews/<slug>.whymark
+npx whymark verify   reviews/<slug>.whymark --write        # re-runs your own claims
 ```
 
 Three rules that matter more than the rest:

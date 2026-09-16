@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseWhymark } from "../lib/whymark/parse";
 import { serializeWhymark } from "../lib/whymark/serialize";
 import { buildSkeleton, isGitRepo, repoRoot, type StubMode } from "../lib/whymark/git";
 import { computeStats, percent } from "../lib/whymark/stats";
 import { validateDocument } from "../lib/whymark/validate";
+import { validateDocumentInRepo } from "../lib/whymark/validate-tree";
 import { summariseResults, verifyDocument, type ClaimResult } from "../lib/whymark/verify";
 import type { Scope } from "../lib/whymark/types";
+import { renderHelp } from "./help";
 
 const c = colors();
 
@@ -97,48 +100,21 @@ function isValue(token: string | undefined): token is string {
   return token !== undefined && (token === "-" || !token.startsWith("-"));
 }
 
-const HELP = `${c.bold("whymark")} — review AI-written code with evidence attached
+function isHelpToken(token: string): boolean {
+  return token === "help" || token === "--help" || token === "-h";
+}
 
-${c.bold("USAGE")}
-  whymark new [scope]            build a .whymark skeleton from a git diff
-  whymark prompt [scope]         print an authoring prompt with the diff embedded
-  whymark validate <file...>     check structure, staleness, coverage
-  whymark verify <file>          re-run every \`verify: cmd\` claim
-  whymark stats <file>           coverage and evidence metrics
-  whymark fmt <file>             rewrite in canonical form
-  whymark view                   how to open the visual reviewer
-
-${c.bold("SCOPE")}  (default: --worktree, falling back to --staged)
-  --unstaged                  git diff
-  --staged                    git diff --cached
-  --worktree                  git diff HEAD
-  --branch [<base>]           git diff <base>...HEAD   (base defaults to origin/HEAD)
-  --commit <rev>              git show <rev>
-
-${c.bold("OPTIONS")}
-  -o, --out <path>            output file (default reviews/<slug>.whymark, - for stdout)
-  --title <text>              review title
-  --author <text>             e.g. "claude-opus-5 (cursor)"
-  --stubs hunk|file|none      how many annotation stubs to pre-create (default hunk)
-  --check <cmd>               record a command to verify (repeatable)
-  --context <n>               diff context lines (default 3)
-  --path <pathspec>           limit to a pathspec (repeatable)
-  --no-untracked              skip files git does not track yet (included by default)
-  --write                     for fmt/verify: write the file back
-  --strict                    for validate: warnings fail too
-  --min-coverage <0..1>       for validate: fail below this line coverage
-  --filter <regex>            for verify: only run matching commands
-  --json                      machine-readable output
-
-${c.bold("EXAMPLES")}
-  whymark new --staged --author "claude-opus-5 (cursor)" -o reviews/auth.whymark
-  whymark prompt --branch main | pbcopy
-  whymark validate reviews/*.whymark --min-coverage 0.8
-  whymark verify reviews/auth.whymark --write
-`;
+function cmdHelp(topic?: string) {
+  const page = renderHelp(topic, c);
+  if (!page.ok) fail(page.message);
+  process.stdout.write(page.text.endsWith("\n") ? page.text : `${page.text}\n`);
+}
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
+  if (isHelpToken(args.command) || args.has("help", "h")) {
+    return cmdHelp(isHelpToken(args.command) ? args.positionals[0] : args.command);
+  }
   switch (args.command) {
     case "new":
     case "init":
@@ -158,17 +134,12 @@ function main() {
     case "view":
     case "open":
       return cmdView();
-    case "help":
-    case "--help":
-    case "-h":
-      process.stdout.write(HELP);
-      return;
     case "version":
     case "--version":
       process.stdout.write(`whymark ${pkgVersion()}\n`);
       return;
     default:
-      fail(`Unknown command \`${args.command}\`. Run \`whymark help\`.`);
+      fail(`Unknown command \`${args.command}\`. Run \`npx whymark help\`.`);
   }
 }
 
@@ -261,8 +232,8 @@ function cmdNew(args: Args) {
       `${c.bold("Next:")} fill in every ${c.cyan("why")}, ${c.cyan("source")} and ${c.cyan(
         "verify",
       )} field, then:`,
-      `  whymark validate ${rel}`,
-      `  whymark verify ${rel} --write`,
+      `  npx whymark validate ${rel}`,
+      `  npx whymark verify ${rel} --write`,
       "",
     ].join("\n"),
   );
@@ -283,14 +254,18 @@ function cmdPrompt(args: Args) {
   const { doc, diff, cwd } = buildDoc(args);
   if (!diff.files.length) noChanges(doc.meta.scope);
   const skeleton = serializeWhymark(doc);
-  const templatePath = join(cwd, "prompts", "whymark-author.md");
-  const template = existsSync(templatePath)
+  const pack = packageRoot();
+  const templatePath = [join(cwd, "prompts", "whymark-author.md"), join(pack, "prompts", "whymark-author.md")].find(
+    existsSync,
+  );
+  const template = templatePath
     ? stripPreamble(readFileSync(templatePath, "utf8"))
     : FALLBACK_PROMPT;
+  const specInRepo = existsSync(join(cwd, "spec/whymark-v1.md"));
   process.stdout.write(
     template.replace("{{SKELETON}}", skeleton.trimEnd()).replace(
       "{{SPEC_PATH}}",
-      existsSync(join(cwd, "spec/whymark-v1.md")) ? "spec/whymark-v1.md" : "the whymark v1 spec",
+      specInRepo ? "spec/whymark-v1.md" : "https://github.com/spink-dev/whymark/blob/main/spec/whymark-v1.md",
     ),
   );
 }
@@ -321,7 +296,7 @@ function loadDoc(path: string) {
 
 function cmdValidate(args: Args) {
   const paths = args.positionals;
-  if (!paths.length) fail("Usage: whymark validate <file...>");
+  if (!paths.length) fail("Usage: npx whymark validate <file...>");
   const cwd = repoRoot() || process.cwd();
   const minCoverage = args.str("min-coverage");
   const json = args.has("json");
@@ -331,7 +306,7 @@ function cmdValidate(args: Args) {
 
   for (const path of paths) {
     const doc = loadDoc(path);
-    const result = validateDocument(doc, {
+    const result = validateDocumentInRepo(doc, {
       cwd,
       strict: args.has("strict"),
       skipStaleness: args.has("no-staleness"),
@@ -389,7 +364,7 @@ function bar(fraction: number, width = 16): string {
 
 function cmdVerify(args: Args) {
   const path = args.positionals[0];
-  if (!path) fail("Usage: whymark verify <file> [--write]");
+  if (!path) fail("Usage: npx whymark verify <file> [--write]");
   const cwd = repoRoot() || process.cwd();
   const doc = loadDoc(path);
   const filter = args.str("filter");
@@ -445,7 +420,7 @@ function outcomeLabel(result: ClaimResult): string {
 
 function cmdStats(args: Args) {
   const path = args.positionals[0];
-  if (!path) fail("Usage: whymark stats <file>");
+  if (!path) fail("Usage: npx whymark stats <file>");
   const doc = loadDoc(path);
   const stats = computeStats(doc);
   if (args.has("json")) {
@@ -496,7 +471,7 @@ function cmdStats(args: Args) {
 
 function cmdFmt(args: Args) {
   const path = args.positionals[0];
-  if (!path) fail("Usage: whymark fmt <file> [--write]");
+  if (!path) fail("Usage: npx whymark fmt <file> [--write]");
   const doc = loadDoc(path);
   const text = serializeWhymark(doc);
   if (args.has("write")) {
@@ -508,17 +483,7 @@ function cmdFmt(args: Args) {
 }
 
 function cmdView() {
-  const port = process.env.PORT ?? "43917";
-  process.stdout.write(
-    [
-      `${c.bold("whymark viewer")}`,
-      "",
-      `  npm run dev            then open http://localhost:${port}`,
-      `  reviews/*.whymark         every file in this directory is listed automatically`,
-      `  /inspect               paste a .whymark file to render it without saving`,
-      "",
-    ].join("\n"),
-  );
+  cmdHelp("view");
 }
 
 /* helpers */
@@ -533,12 +498,24 @@ function slug(title: string): string {
   );
 }
 
+/** Directory of this published package, not the caller's git repo. */
+function packageRoot(): string {
+  const here = dirname(fileURLToPath(import.meta.url));
+  for (const dir of [join(here, ".."), join(here, "../..")]) {
+    const pkgPath = join(dir, "package.json");
+    if (!existsSync(pkgPath)) continue;
+    try {
+      if (JSON.parse(readFileSync(pkgPath, "utf8")).name === "whymark") return dir;
+    } catch {
+      // keep walking
+    }
+  }
+  return join(here, "../..");
+}
+
 function pkgVersion(): string {
   try {
-    const pkg = JSON.parse(
-      readFileSync(join(repoRoot() || process.cwd(), "package.json"), "utf8"),
-    );
-    return pkg.version ?? "0.0.0";
+    return JSON.parse(readFileSync(join(packageRoot(), "package.json"), "utf8")).version ?? "0.0.0";
   } catch {
     return "0.0.0";
   }

@@ -20,15 +20,15 @@ a code review or walkthrough of what you did — write a whymark review.
 **Instructions: `.agents/skills/whymark/SKILL.md`.** Short version:
 
 ```bash
-npm run whymark -- new --staged --author "<your model name>"   # writes reviews/<slug>.whymark
+npx whymark new --staged --author "<your model name>"   # writes reviews/<slug>.whymark
 # fill in summary and every why / source / verify field
-npm run whymark -- validate reviews/<slug>.whymark
-npm run whymark -- verify   reviews/<slug>.whymark --write
+npx whymark validate reviews/<slug>.whymark
+npx whymark verify reviews/<slug>.whymark --write
 ```
 
 `why:` gives the reason, never a restatement of the code. `source:` cites only
 what you actually read, and `inference` when there was nothing. `verify:` claims
-`pass` only for commands you really ran — `whymark verify` re-runs them.
+`pass` only for commands you really ran — `npx whymark verify` re-runs them.
 
 ## Working on this repository
 

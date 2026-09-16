@@ -11,6 +11,7 @@ import {
   replaceRange,
   type FileDecisions,
 } from "@/lib/whymark/edit";
+import { canWriteWorkingTree } from "@/lib/site";
 import type { FileSection } from "@/lib/whymark/types";
 
 export interface EditResult {
@@ -34,6 +35,9 @@ async function locate(
   slug: string,
   path: string,
 ): Promise<{ file: FileSection; absolute: string; current: string } | { error: string }> {
+  if (!canWriteWorkingTree()) {
+    return { error: "This hosted viewer cannot write files. Run it against your own checkout." };
+  }
   const review = await loadReview(slug);
   if (!review) return { error: "That review no longer exists." };
 

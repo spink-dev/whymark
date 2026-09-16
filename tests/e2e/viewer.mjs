@@ -234,11 +234,11 @@ const overlap = await page.evaluate(() => {
 check("no two cards overlap", overlap <= 0, `worst overlap ${overlap}px`);
 
 // --- inspect page -------------------------------------------------------
-await page.goto(`${BASE}/inspect`, { waitUntil: "networkidle" });
+await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
 await page.getByRole("button", { name: /try an example/i }).click();
-await page.waitForTimeout(2500);
+await page.waitForTimeout(5000);
 const renderedPasted = await page.getByText("Reject expired invite tokens").first().isVisible().catch(() => false);
-check("inspect: try an example renders", renderedPasted);
+check("home: try an example renders", renderedPasted);
 await page.screenshot({ path: `${OUT}/pw-06-inspect.png`, fullPage: false });
 
 // --- a second, denser review -------------------------------------------

@@ -1,18 +1,21 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { hashObject } from "./git";
 import { computeStats, hasPassingVerify, type DocStats } from "./stats";
 import { allNotes, isStub, type WhymarkDocument, type Diagnostic } from "./types";
 
 export interface ValidateOptions {
-  /** Repo root used to resolve file paths for staleness checks. */
-  cwd?: string;
-  /** Skip working-tree comparison (useful for fixtures and CI on a bare diff). */
-  skipStaleness?: boolean;
   /** Fail when line coverage is below this fraction, 0..1. */
   minCoverage?: number;
   /** Treat warnings as errors. */
   strict?: boolean;
+  /**
+   * Extra diagnostics, typically working-tree staleness from
+   * `validate-tree.ts`. Kept out of this module so the browser viewer can
+   * validate a pasted file without bundling `node:fs`.
+   */
+  extraDiagnostics?: Diagnostic[];
+  /** Repo root; ignored here. Pass tree checks via `extraDiagnostics`. */
+  cwd?: string;
+  /** Ignored here. Tree comparison is `collectStaleness` in `validate-tree.ts`. */
+  skipStaleness?: boolean;
 }
 
 export interface ValidationResult {
@@ -27,9 +30,11 @@ export function validateDocument(
   doc: WhymarkDocument,
   options: ValidateOptions = {},
 ): ValidationResult {
-  const diagnostics: Diagnostic[] = [...doc.diagnostics];
+  const diagnostics: Diagnostic[] = [
+    ...doc.diagnostics,
+    ...(options.extraDiagnostics ?? []),
+  ];
   const stats = computeStats(doc);
-  const cwd = options.cwd ?? process.cwd();
 
   if (!doc.files.length && !doc.notes.length) {
     diagnostics.push({
@@ -60,34 +65,6 @@ export function validateDocument(
         level: "warning",
         code: "file-empty",
         message: `\`${file.path}\` has no hunks.`,
-        file: file.path,
-      });
-    }
-
-    // A review of a past commit describes a blob that cannot change, so
-    // comparing it to the working tree would report every later edit as decay.
-    if (options.skipStaleness || !file.newSha || doc.meta.scope === "commit") continue;
-    if (file.status === "deleted") continue;
-
-    const abs = join(cwd, file.path);
-    if (!existsSync(abs)) {
-      diagnostics.push({
-        level: "warning",
-        code: "file-missing",
-        message: `\`${file.path}\` is annotated but not present in the working tree.`,
-        file: file.path,
-      });
-      continue;
-    }
-    const actual = hashObject(file.path, cwd);
-    if (actual && !actual.startsWith(file.newSha) && !file.newSha.startsWith(actual)) {
-      diagnostics.push({
-        level: "warning",
-        code: "review-stale",
-        message: `\`${file.path}\` has changed since this review was written (recorded ${file.newSha.slice(
-          0,
-          8,
-        )}, now ${actual.slice(0, 8)}). Annotations may no longer match the code.`,
         file: file.path,
       });
     }

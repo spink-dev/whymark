@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
 import { loadReview, listReviews } from "@/lib/reviews";
-import { validateDocument } from "@/lib/whymark/validate";
+import { validateDocumentInRepo } from "@/lib/whymark/validate-tree";
+import { isActionable } from "@/lib/whymark/edit";
+import { hashObject } from "@/lib/whymark/git";
 import { buildReviewVM } from "@/lib/view-model";
 import { ReviewView } from "@/components/whymark/review-view";
+import { canWriteWorkingTree } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +29,19 @@ export default async function ReviewPage({ params }: PageProps<"/r/[slug]">) {
   const review = await loadReview(slug);
   if (!review) notFound();
 
+  const writable = canWriteWorkingTree();
   const [vm, validation] = await Promise.all([
-    buildReviewVM(review.doc),
-    Promise.resolve(validateDocument(review.doc, { cwd: process.cwd() })),
+    buildReviewVM(review.doc, {
+      isWritable: writable
+        ? (file) => isActionable(file, hashObject(file.path, process.cwd()))
+        : undefined,
+    }),
+    Promise.resolve(
+      validateDocumentInRepo(review.doc, {
+        cwd: process.cwd(),
+        skipStaleness: !writable,
+      }),
+    ),
   ]);
 
   return <ReviewView review={vm} slug={review.slug} issues={validation.diagnostics} />;
