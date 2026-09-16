@@ -17,10 +17,13 @@ summary: |
   inside it, capped so a single call cannot stall a request indefinitely.
 
   This file really exists in the repo, so this review is live: the controls in
-  the gutter discard an added line or put a removed one back, and `edit` writes
-  your own version straight to `examples/retry.ts`. Two parts of the change are
-  deliberately worth rejecting — a leftover debug log and a widened list of
-  retryable statuses. `git checkout examples/` undoes anything you apply.
+  the gutter discard an added line or put a removed one back, clicking a
+  highlighted piece of a changed line takes just that piece back to the old
+  text, and `edit` writes your own version straight to `examples/retry.ts`.
+  Three parts of the change are deliberately worth rejecting — a leftover debug
+  log, a widened list of retryable statuses, and a base delay nudged from 200ms
+  to 250ms on the same line as a rename worth keeping. `git checkout examples/`
+  undoes anything you apply.
 checks:
   - cmd: npm test -- example-retry
     status: pass
@@ -33,7 +36,7 @@ review:
   status: pending
 ---
 
-@file examples/retry.ts modified +13 -3 oldsha=67c802a newsha=7d38fff
+@file examples/retry.ts modified +14 -4 oldsha=67c802a newsha=92831f0
 @@ -10,23 +10,31 @@
  export interface RetryOptions {
    attempts?: number;
@@ -63,7 +66,8 @@ review:
    options: RetryOptions = {},
  ): Promise<T> {
    const attempts = options.attempts ?? 3;
-   const delayMs = options.delayMs ?? 200;
+-  const delayMs = options.delayMs ?? 200;
++  const baseDelayMs = options.delayMs ?? 250;
 +  const maxDelayMs = options.maxDelayMs ?? 5_000;
    let lastError: unknown;
  
@@ -73,7 +77,7 @@ review:
        lastError = error;
        if (!isRetryable(error) || attempt === attempts) break;
 -      await sleep(delayMs);
-+      const wait = backoff(attempt, delayMs, maxDelayMs);
++      const wait = backoff(attempt, baseDelayMs, maxDelayMs);
 +      console.log(`[retry] attempt ${attempt} failed, waiting ${wait}ms`);
 +      await sleep(wait);
      }
@@ -119,6 +123,18 @@ source: url:https://aws.amazon.com/builders-library/timeouts-retries-and-backoff
 source: file:tests/example-retry.test.ts:57 — the bound is asserted, not assumed
 verify: cmd:"npm test -- example-retry" => pass (7 tests)
 verify: type:"npm run typecheck" => pass
+
+@note +36 kind=risk risk=low confidence=0.5
+why: Two things happened on this line. The local was renamed because `delayMs`
+  read as "the delay" when it is only the first window, and the default moved
+  from 200ms to 250ms. The rename is worth keeping; the new number is not
+  something this change had any reason to touch.
+source: inference — no instruction covered the default, and nothing in the repo
+  derives 250ms from a measurement
+verify: none => unverified (both defaults pass the tests, which pin their own
+  delays rather than the default)
+todo: click the highlighted `250` to take that part back to 200 and keep the
+  rename
 
 @note +37 kind=assumption confidence=0.6
 why: 5 seconds is a guess at "long enough to outlast a restart, short enough

@@ -26,9 +26,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { isEmpty, type FileDecisions } from "@/lib/whymark/edit";
+import { isEmpty, partsOf, type FileDecisions } from "@/lib/whymark/edit";
+import type { RowVM } from "@/lib/view-model";
+import type { PartHandlers } from "./code-line";
 
-export type LineVerdict = "kept" | "discarded" | "restored";
+export type LineVerdict = "kept" | "discarded" | "restored" | "edited";
 
 /**
  * The per-line toggle, in a fixed-width column so turning a decision on never
@@ -102,6 +104,32 @@ export function LineControl({
       )}
     </button>
   );
+}
+
+/**
+ * Part handlers for one line, or nothing when the line has no revertible parts.
+ *
+ * A line already on its way out has nothing to revert within it, so the parts go
+ * quiet rather than offering a decision that the discard would override.
+ */
+export function partHandlers(
+  line: RowVM,
+  verdict: LineVerdict,
+  canDecide: boolean,
+  decisions: FileDecisions,
+  onTogglePart: (line: number, part: number) => void,
+): PartHandlers | undefined {
+  const target = line.newLine;
+  if (!canDecide || target === undefined) return undefined;
+  if (line.kind !== "add" || !line.parts?.some((part) => part.changed)) return undefined;
+  if (verdict === "discarded") return undefined;
+
+  return {
+    reverted: partsOf(decisions)
+      .filter((ref) => ref.line === target)
+      .map((ref) => ref.part),
+    onToggle: (part) => onTogglePart(target, part),
+  };
 }
 
 /** Hunk-level actions: reject the whole thing, undo that, or edit it by hand. */
@@ -238,6 +266,7 @@ export interface ApplySummary {
   files: number;
   discarded: number;
   restored: number;
+  parts: number;
 }
 
 /**
@@ -256,7 +285,8 @@ export function ApplyControls({
   onApply: () => void;
   onReset: () => void;
 }) {
-  if (summary.discarded + summary.restored === 0) return null;
+  const pending = summary.discarded + summary.restored + summary.parts;
+  if (pending === 0) return null;
 
   return (
     <div
@@ -269,9 +299,7 @@ export function ApplyControls({
       <span className="hidden text-[11.5px] lg:inline" title="writes to your working tree">
         {describe(summary)}
       </span>
-      <span className="text-[11.5px] lg:hidden">
-        {summary.discarded + summary.restored} to undo
-      </span>
+      <span className="text-[11.5px] lg:hidden">{pending} to undo</span>
       <button
         type="button"
         onClick={onReset}
@@ -339,11 +367,17 @@ export function ApplyResult({
   );
 }
 
-function describe({ discarded, restored }: ApplySummary): string {
-  const parts: string[] = [];
-  if (discarded) parts.push(`discard ${discarded} added ${plural(discarded, "line")}`);
-  if (restored) parts.push(`restore ${restored} removed ${plural(restored, "line")}`);
-  return parts.join(" and ") || "no changes";
+function describe({ discarded, restored, parts }: ApplySummary): string {
+  const phrases: string[] = [];
+  if (discarded) phrases.push(`discard ${discarded} added ${plural(discarded, "line")}`);
+  if (restored) phrases.push(`restore ${restored} removed ${plural(restored, "line")}`);
+  if (parts) phrases.push(`revert ${parts} ${plural(parts, "part")}`);
+  return join(phrases) || "no changes";
+}
+
+function join(phrases: string[]): string {
+  if (phrases.length < 3) return phrases.join(" and ");
+  return `${phrases.slice(0, -1).join(", ")}, and ${phrases.at(-1)}`;
 }
 
 function plural(n: number, word: string): string {
@@ -357,7 +391,9 @@ export function verdictFor(
   decisions: FileDecisions,
 ): LineVerdict {
   if (row.kind === "add" && row.newLine !== undefined) {
-    return decisions.discardAdded.includes(row.newLine) ? "discarded" : "kept";
+    if (decisions.discardAdded.includes(row.newLine)) return "discarded";
+    const line = row.newLine;
+    return partsOf(decisions).some((ref) => ref.line === line) ? "edited" : "kept";
   }
   if (row.kind === "del" && row.oldLine !== undefined) {
     return decisions.restoreDeleted.includes(row.oldLine) ? "restored" : "kept";

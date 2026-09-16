@@ -175,6 +175,6 @@ describe("editing surface", () => {
         "b.ts": { discardAdded: [], restoreDeleted: [7] },
         "c.ts": { discardAdded: [], restoreDeleted: [] },
       }),
-    ).toEqual({ files: 2, discarded: 2, restored: 1 });
+    ).toEqual({ files: 2, discarded: 2, restored: 1, parts: 0 });
   });
 });

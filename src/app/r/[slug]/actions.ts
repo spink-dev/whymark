@@ -19,6 +19,7 @@ export interface EditResult {
   newSha?: string;
   discarded?: number;
   restored?: number;
+  partsReverted?: number;
   error?: string;
 }
 
@@ -73,7 +74,13 @@ export async function applyFileDecisions(
 
   const result = applyDecisions(found.current, found.file.hunks, decisions);
   if (result.text === found.current) {
-    return { ok: true, discarded: 0, restored: 0, newSha: found.file.newSha };
+    return {
+      ok: true,
+      discarded: 0,
+      restored: 0,
+      partsReverted: 0,
+      newSha: found.file.newSha,
+    };
   }
 
   await writeFile(found.absolute, result.text, "utf8");
@@ -82,6 +89,7 @@ export async function applyFileDecisions(
     ok: true,
     discarded: result.discarded,
     restored: result.restored,
+    partsReverted: result.partsReverted,
     newSha: hashObject(path, process.cwd()) ?? undefined,
   };
 }

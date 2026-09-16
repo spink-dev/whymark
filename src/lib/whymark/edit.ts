@@ -7,19 +7,64 @@
  * the diff's new side (compare `newSha`), which makes every new-side line number
  * in the diff an exact index into it.
  */
+import { applyPartReverts, partsByNewLine } from "./inline";
 import type { FileSection, Hunk } from "./types";
+
+/** One changed part of one replaced line, addressed by new-side line number. */
+export interface PartRef {
+  line: number;
+  part: number;
+}
 
 export interface FileDecisions {
   /** New-side line numbers to drop: added lines the reviewer rejects. */
   discardAdded: number[];
   /** Old-side line numbers to bring back: deletions the reviewer rejects. */
   restoreDeleted: number[];
+  /**
+   * Parts of a replaced line to take back to the old text while the rest of the
+   * new line stays. Empty on decisions made before this existed, so it is
+   * optional to read.
+   */
+  revertParts?: PartRef[];
 }
 
-export const NO_DECISIONS: FileDecisions = { discardAdded: [], restoreDeleted: [] };
+export const NO_DECISIONS: FileDecisions = {
+  discardAdded: [],
+  restoreDeleted: [],
+  revertParts: [],
+};
+
+export function partsOf(decisions: FileDecisions): PartRef[] {
+  return decisions.revertParts ?? [];
+}
 
 export function isEmpty(decisions: FileDecisions): boolean {
-  return decisions.discardAdded.length === 0 && decisions.restoreDeleted.length === 0;
+  return (
+    decisions.discardAdded.length === 0 &&
+    decisions.restoreDeleted.length === 0 &&
+    partsOf(decisions).length === 0
+  );
+}
+
+export function hasPart(decisions: FileDecisions, line: number, part: number): boolean {
+  return partsOf(decisions).some((ref) => ref.line === line && ref.part === part);
+}
+
+export function togglePart(
+  decisions: FileDecisions,
+  line: number,
+  part: number,
+): FileDecisions {
+  const current = partsOf(decisions);
+  const without = current.filter((ref) => !(ref.line === line && ref.part === part));
+  return {
+    ...decisions,
+    revertParts:
+      without.length === current.length
+        ? [...current, { line, part }].sort((a, b) => a.line - b.line || a.part - b.part)
+        : without,
+  };
 }
 
 export interface DeletedLine {
@@ -86,6 +131,7 @@ export interface ApplyResult {
   text: string;
   discarded: number;
   restored: number;
+  partsReverted: number;
 }
 
 /**
@@ -112,15 +158,39 @@ export function applyDecisions(
     restored += 1;
   }
 
+  // Part reverts are grouped per line: rewriting a line once, from all of its
+  // reverted parts at the same time, is the only way two reverts on one line do
+  // not overwrite each other.
+  const partsPerLine = new Map<number, Set<number>>();
+  for (const ref of partsOf(decisions)) {
+    if (discard.has(ref.line)) continue;
+    const bucket = partsPerLine.get(ref.line) ?? new Set<number>();
+    bucket.add(ref.part);
+    partsPerLine.set(ref.line, bucket);
+  }
+  const available = partsPerLine.size ? partsByNewLine(hunks) : new Map();
+
   const source = splitText(current);
   const out: string[] = [];
   let discarded = 0;
+  let partsReverted = 0;
 
   out.push(...(restoreAfter.get(0) ?? []));
   source.lines.forEach((text, index) => {
     const newLine = index + 1;
-    if (discard.has(newLine)) discarded += 1;
-    else out.push(text);
+    if (discard.has(newLine)) {
+      discarded += 1;
+    } else {
+      const wanted = partsPerLine.get(newLine);
+      const parts = wanted && available.get(newLine);
+      if (wanted && parts) {
+        const usable = [...wanted].filter((part) => parts[part]?.changed);
+        out.push(usable.length ? applyPartReverts(parts, usable) : text);
+        partsReverted += usable.length;
+      } else {
+        out.push(text);
+      }
+    }
     const back = restoreAfter.get(newLine);
     if (back) out.push(...back);
   });
@@ -129,6 +199,7 @@ export function applyDecisions(
     text: joinText({ lines: out, trailingNewline: source.trailingNewline }),
     discarded,
     restored,
+    partsReverted,
   };
 }
 
@@ -183,17 +254,20 @@ export function summarize(all: Record<string, FileDecisions>): {
   files: number;
   discarded: number;
   restored: number;
+  parts: number;
 } {
   let files = 0;
   let discarded = 0;
   let restored = 0;
+  let parts = 0;
   for (const decisions of Object.values(all)) {
     if (isEmpty(decisions)) continue;
     files += 1;
     discarded += decisions.discardAdded.length;
     restored += decisions.restoreDeleted.length;
+    parts += partsOf(decisions).length;
   }
-  return { files, discarded, restored };
+  return { files, discarded, restored, parts };
 }
 
 /**

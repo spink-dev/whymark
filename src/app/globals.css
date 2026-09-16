@@ -144,6 +144,8 @@
   --whymark-del-bg: oklch(0.68 0.19 22 / 0.1);
   --whymark-add-strong: oklch(0.72 0.16 150 / 0.26);
   --whymark-del-strong: oklch(0.68 0.19 22 / 0.24);
+  /* A line kept, but with part of it taken back to the old text. */
+  --whymark-part: oklch(0.79 0.15 85);
 
   --whymark-pass: oklch(0.74 0.15 155);
   --whymark-fail: oklch(0.67 0.2 25);

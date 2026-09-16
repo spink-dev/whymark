@@ -116,12 +116,14 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
     const failures: string[] = [];
     let discarded = 0;
     let restored = 0;
+    let parts = 0;
 
     for (const [path, fileDecisions] of Object.entries(decisions)) {
       const result = await applyFileDecisions(slug, path, fileDecisions);
       if (result.ok) {
         discarded += result.discarded ?? 0;
         restored += result.restored ?? 0;
+        parts += result.partsReverted ?? 0;
       } else {
         failures.push(result.error ?? `${path} could not be written.`);
       }
@@ -138,6 +140,7 @@ export function ReviewView({ review, slug, issues }: ReviewViewProps) {
       restored
         ? `${restored} removed ${restored === 1 ? "line" : "lines"} restored`
         : "",
+      parts ? `${parts} ${parts === 1 ? "part" : "parts"} reverted in place` : "",
     ]
       .filter(Boolean)
       .join(", ");
@@ -665,6 +668,7 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
     ["?", "toggle this help"],
     ["esc", "clear selection"],
     ["click a line", "select the annotation covering it"],
+    ["click a highlight", "revert just that part of a changed line"],
     ["click a card", "highlight the lines it explains"],
   ];
   return (

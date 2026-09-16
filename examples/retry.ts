@@ -33,7 +33,7 @@ export async function withRetry<T>(
   options: RetryOptions = {},
 ): Promise<T> {
   const attempts = options.attempts ?? 3;
-  const delayMs = options.delayMs ?? 200;
+  const baseDelayMs = options.delayMs ?? 250;
   const maxDelayMs = options.maxDelayMs ?? 5_000;
   let lastError: unknown;
 
@@ -43,7 +43,7 @@ export async function withRetry<T>(
     } catch (error) {
       lastError = error;
       if (!isRetryable(error) || attempt === attempts) break;
-      const wait = backoff(attempt, delayMs, maxDelayMs);
+      const wait = backoff(attempt, baseDelayMs, maxDelayMs);
       console.log(`[retry] attempt ${attempt} failed, waiting ${wait}ms`);
       await sleep(wait);
     }

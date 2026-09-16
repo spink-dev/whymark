@@ -1,5 +1,6 @@
 import { buildRows } from "@/lib/whymark/align";
 import { isActionable } from "@/lib/whymark/edit";
+import { inlineParts, linePairs, type InlinePart } from "@/lib/whymark/inline";
 import { hashObject } from "@/lib/whymark/git";
 import { languageFor } from "@/lib/whymark/lang";
 import { computeStats, type FileStats } from "@/lib/whymark/stats";
@@ -17,6 +18,13 @@ export interface RowVM {
   noteIds: string[];
   /** Character range that actually changed, for a paired del/add line. */
   intra?: [number, number];
+  /**
+   * The changed parts of a replaced line, each independently revertible. Only
+   * present on a line the diff paired with a line on the other side.
+   */
+  parts?: InlinePart[];
+  /** The line this one replaced, so a part revert knows what to go back to. */
+  pairedLine?: number;
 }
 
 export interface FileVM {
@@ -81,7 +89,7 @@ export async function buildReviewVM(doc: WhymarkDocument): Promise<ReviewVM> {
       };
     });
 
-    markIntralineChanges(vmRows);
+    markInlineParts(vmRows, file);
 
     files.push({
       path: file.path,
@@ -109,55 +117,50 @@ export async function buildReviewVM(doc: WhymarkDocument): Promise<ReviewVM> {
 }
 
 /**
- * Marks the part of a replaced line that actually changed, so a one-character
- * edit does not read as a whole rewritten line.
+ * Marks the changed parts of each replaced line.
+ *
+ * The viewer and the apply path read the same pairing and the same parts, so
+ * what is highlighted is exactly what a reviewer can revert — anything else
+ * would offer a control that writes something other than what it shows.
  */
-function markIntralineChanges(rows: RowVM[]) {
-  let i = 0;
-  while (i < rows.length) {
-    if (rows[i].kind !== "del") {
-      i++;
+function markInlineParts(rows: RowVM[], file: FileSection) {
+  const byNew = new Map<number, InlinePart[]>();
+  const oldOf = new Map<number, number>();
+  const newOf = new Map<number, number>();
+
+  for (const pair of linePairs(file.hunks)) {
+    const parts = inlineParts(pair.oldText, pair.newText);
+    if (!parts.some((part) => part.changed)) continue;
+    byNew.set(pair.newLine, parts);
+    oldOf.set(pair.newLine, pair.oldLine);
+    newOf.set(pair.oldLine, pair.newLine);
+  }
+
+  for (const row of rows) {
+    if (row.kind === "add" && row.newLine !== undefined) {
+      const parts = byNew.get(row.newLine);
+      if (!parts) continue;
+      row.parts = parts;
+      row.pairedLine = oldOf.get(row.newLine);
+      row.intra = spanOf(parts, "new");
       continue;
     }
-    const dels: RowVM[] = [];
-    while (i < rows.length && rows[i].kind === "del") dels.push(rows[i++]);
-    const adds: RowVM[] = [];
-    while (i < rows.length && rows[i].kind === "add") adds.push(rows[i++]);
-    if (dels.length !== adds.length) continue;
-
-    for (let k = 0; k < dels.length; k++) {
-      const range = changedRange(dels[k].text, adds[k].text);
-      if (!range) continue;
-      dels[k].intra = range.left;
-      adds[k].intra = range.right;
+    if (row.kind === "del" && row.oldLine !== undefined) {
+      const partnered = newOf.get(row.oldLine);
+      const parts = partnered === undefined ? undefined : byNew.get(partnered);
+      if (!parts) continue;
+      row.pairedLine = partnered;
+      row.intra = spanOf(parts, "old");
     }
   }
 }
 
-function changedRange(
-  before: string,
-  after: string,
-): { left: [number, number]; right: [number, number] } | null {
-  if (!before || !after || before === after) return null;
-
-  let prefix = 0;
-  const max = Math.min(before.length, after.length);
-  while (prefix < max && before[prefix] === after[prefix]) prefix++;
-
-  let suffix = 0;
-  while (
-    suffix < max - prefix &&
-    before[before.length - 1 - suffix] === after[after.length - 1 - suffix]
-  ) {
-    suffix++;
-  }
-
-  const leftEnd = before.length - suffix;
-  const rightEnd = after.length - suffix;
-  const changed = Math.max(leftEnd - prefix, rightEnd - prefix);
-  const longest = Math.max(before.length, after.length);
-
-  // If most of the line changed, highlighting a range adds noise instead of signal.
-  if (changed <= 0 || changed / longest > 0.7) return null;
-  return { left: [prefix, leftEnd], right: [prefix, rightEnd] };
+/** The outer bounds of the changed parts, for the plain highlight on the old side. */
+function spanOf(parts: InlinePart[], side: "old" | "new"): [number, number] | undefined {
+  const changed = parts.filter((part) => part.changed);
+  if (!changed.length) return undefined;
+  const starts = changed.map((part) => (side === "new" ? part.newStart : part.oldStart));
+  const ends = changed.map((part) => (side === "new" ? part.newEnd : part.oldEnd));
+  return [Math.min(...starts), Math.max(...ends)];
 }
+

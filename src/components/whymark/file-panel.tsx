@@ -19,7 +19,12 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { layoutRail, type Anchor } from "@/lib/whymark/align";
-import { NO_DECISIONS, type FileDecisions } from "@/lib/whymark/edit";
+import {
+  NO_DECISIONS,
+  partsOf,
+  togglePart,
+  type FileDecisions,
+} from "@/lib/whymark/edit";
 import type { Note } from "@/lib/whymark/types";
 import type { FileVM, RowVM } from "@/lib/view-model";
 import { KIND_META } from "./meta";
@@ -30,6 +35,7 @@ import {
   HunkControls,
   HunkEditor,
   LineControl,
+  partHandlers,
   toggleLine,
   verdictFor,
   type LineVerdict,
@@ -186,6 +192,12 @@ export function FilePanel({
     [decisions, file.path, onDecisions],
   );
 
+  const onTogglePart = useCallback(
+    (line: number, part: number) =>
+      onDecisions?.(file.path, togglePart(decisions, line, part)),
+    [decisions, file.path, onDecisions],
+  );
+
   const discardHunk = useCallback(
     (hunk: HunkSpan) =>
       onDecisions?.(file.path, {
@@ -239,6 +251,7 @@ export function FilePanel({
     decisions,
     canDecide,
     onToggle,
+    onTogglePart,
     hunks,
     decidedIn,
     onDiscardHunk: discardHunk,
@@ -259,7 +272,9 @@ export function FilePanel({
           : FileDiff;
 
   const decidedTotal =
-    decisions.discardAdded.length + decisions.restoreDeleted.length;
+    decisions.discardAdded.length +
+    decisions.restoreDeleted.length +
+    partsOf(decisions).length;
 
   // The panel must not clip its own overflow. Any `overflow` ancestor becomes the
   // scrollport for the sticky header below, which then sticks 56px down inside
@@ -433,6 +448,7 @@ interface RowProps {
   decisions: FileDecisions;
   canDecide: boolean;
   onToggle: (row: RowVM) => void;
+  onTogglePart: (line: number, part: number) => void;
   hunks: HunkSpan[];
   decidedIn: (hunk: HunkSpan) => number;
   onDiscardHunk: (hunk: HunkSpan) => void;
@@ -573,6 +589,10 @@ function verdictStyle(verdict: LineVerdict): {
   if (verdict === "restored") {
     return { boxShadow: "inset 2px 0 0 var(--whymark-add)" };
   }
+  if (verdict === "edited") {
+    // The line stays, but not as written: part of it goes back to the old text.
+    return { boxShadow: "inset 2px 0 0 var(--whymark-part)" };
+  }
   return {};
 }
 
@@ -586,6 +606,7 @@ function UnifiedRow({
   decisions,
   canDecide,
   onToggle,
+  onTogglePart,
   hunks,
   decidedIn,
   onDiscardHunk,
@@ -670,6 +691,8 @@ function UnifiedRow({
           tokens={line.tokens}
           intra={line.intra}
           tone={row.kind === "add" ? "add" : "del"}
+          parts={line.parts}
+          handlers={partHandlers(line, verdict, canDecide, decisions, onTogglePart)}
         />
       </span>
     </div>
@@ -687,6 +710,7 @@ function SplitRow({
   decisions,
   canDecide,
   onToggle,
+  onTogglePart,
   hunks,
   decidedIn,
   onDiscardHunk,
@@ -780,7 +804,13 @@ function SplitRow({
         {changed ? (side === "add" ? "+" : "−") : " "}
       </span>
       <span className={cn("pr-6", decorate.className)}>
-        <Tokens tokens={cell.tokens} intra={cell.intra} tone={side} />
+        <Tokens
+          tokens={cell.tokens}
+          intra={cell.intra}
+          tone={side}
+          parts={cell.parts}
+          handlers={partHandlers(cell, verdict, canDecide, decisions, onTogglePart)}
+        />
       </span>
     </div>
   );
