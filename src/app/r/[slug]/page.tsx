@@ -1,3 +1,4 @@
+import { localEvidence, sourceFingerprint, reviewFingerprint } from "@/lib/whymark/evidence-node";
 import { notFound } from "next/navigation";
 import { loadReview, listReviews } from "@/lib/reviews";
 import { validateDocumentInRepo } from "@/lib/whymark/validate-tree";
@@ -32,6 +33,9 @@ export default async function ReviewPage({ params }: PageProps<"/r/[slug]">) {
   const writable = canWriteWorkingTree();
   const [vm, validation] = await Promise.all([
     buildReviewVM(review.doc, {
+      source: writable ? sourceFingerprint(process.cwd()) : undefined,
+      reviewHash: reviewFingerprint(review.doc),
+      evidence: writable ? localEvidence(review.doc, process.cwd()) : undefined,
       isWritable: writable
         ? (file) => isActionable(file, hashObject(file.path, process.cwd()))
         : undefined,

@@ -246,6 +246,7 @@ the main defence against an annotation that has drifted off its code.
 | --- | --- | --- |
 | `kind` | see §4.3 | What sort of annotation this is. Default `note`. |
 | `risk` | `low` `medium` `high` | Blast radius if this is wrong. |
+| `urgency` | `info` `normal` `urgent` `blocking` | Priority to act. Accepted on input; writers emit the body field below for older v1 readers. |
 | `confidence` | `0`–`1` | How sure the author is. Be honest; low confidence is a feature. |
 | `id` | slug | Stable anchor for deep links. Auto-assigned (`n1`, `n2`, …) if absent. |
 
@@ -280,6 +281,7 @@ with `https://…` from parsing as a field called `https`.
 
 | Field | Repeat | Meaning |
 | --- | --- | --- |
+| `urgency` | – | `info`, `normal`, `urgent`, or `blocking`; priority to act, independent of risk. Unknown values are preserved and warned about. |
 | `why` | – | Why the code is the way it is. The most important field. |
 | `what` | – | What the code does, when it is genuinely non-obvious. Do not narrate. |
 | `source` | ✔ | Evidence and provenance (§4.5). |
@@ -349,6 +351,17 @@ single highest-value signal in the format.
 
 ---
 
+### 4.7 Urgency and compact rendering
+
+Writers emit `urgency: urgent` before other fields, rather than `urgency=urgent`
+in the header. Older v1 parsers preserve unknown body fields but may drop unknown
+header attributes. This additive convention retains the value on round trips through
+older writers. Updated readers also accept header input. Missing urgency remains
+unspecified; never infer it from risk or kind. Collapsed notes retain kind, urgency,
+selector and explicitly labeled author confidence (unknown when absent).
+Multiple annotations may share a selector. Viewers must expose each independently,
+including when other annotations on that line have been filtered out.
+
 ## 5. `@check`
 
 A verification run that belongs to the change as a whole, written in the body
@@ -363,14 +376,68 @@ Tools merge `@check` lines and frontmatter `checks` into one list.
 
 ---
 
+### 5.1 Execution evidence extension
+
+Optional frontmatter `evidence` is an array of version-1 execution records.
+Existing v1 tools preserve this frontmatter extension; a reader must not promote
+legacy passing claims to fresh execution results. Each record contains:
+
+- `version: 1`, `command`, `noteId` (null for a global check), `file` (nullable),
+  `claimed` (original claim), `status` (`pass`, `fail`, `unavailable`).
+- `ran` (ISO time), `durationMs`, `exitCode` (nullable), `cwd` (repo relative),
+  `tool` (whymark version), `runtime` (Node version).
+- `source` / `sourceAfter` (nullable SHA-256 source fingerprints), `head` and
+  `base` (nullable revisions), `reviewHash` (SHA-256 of the normalized diff).
+- `outputHash` (SHA-256), `outputArtifact` (repo-relative output file), `summary`.
+
+`verify --write` records these alongside updated claims. Logs are saved under
+`.artifacts/whymark/<hash>.log`; inspect logs before sharing them. Fingerprints
+cover HEAD, tracked files (including deletions), and non-ignored untracked files,
+including tests/config/lockfiles and symlink targets as link text. Generated
+`.artifacts/` and review outputs under `reviews/` (`.whymark`, `.quality.json`)
+are excluded. Ignored inputs, installed dependency bytes and external services are
+not fingerprinted; this is bounded evidence, not a reproducible-build attestation.
+Reviews outside `reviews/` may invalidate their own source fingerprint when rewritten.
+
+Hashes bind evidence to bytes; they do not authenticate the author or guarantee
+truth. Imported records are labeled as such. The local viewer checks current source,
+normalized diff identity and output hashes before showing a current record. A changed
+source or diff is stale; missing outputs/fingerprints are unavailable. A passing and
+failing claim on one note cannot yield unqualified passing coverage. A contradiction
+is retained even when the original claim is rewritten with the command result.
+Viewing/importing never executes commands. Explicit `verify` executes shell commands
+from the review; inspect them before using it on an untrusted document.
+
+### 5.2 Quality report extension
+
+Optional frontmatter `quality` holds one version-1 report. Fields: `version`, `ran`,
+`source`, `sourceAfter`, `head`, `clean` (whether relevant source was clean), `base`, `reviewHash`, `provenance` (`local-run` or
+`imported`), `comparison` (`available` or `unavailable`), `checks`, and `findings`.
+Each check has `id`, `version`, `command`, `status` (`pass`, `fail`, `unavailable`),
+`exitCode`, `outputHash`, `outputArtifact`, and `detail`.
+Each finding has `id`, `tool`, `rule`, `severity` (`warning` or `error`), `message`,
+nullable repo-relative `path`, nullable one-based `line` and `endLine`, optional
+HTTP(S) `helpUrl`, and `status` (`new`, `existing`, `resolved`, `uncompared`). Optional
+`suppression` contains `reason` and an ISO `expires` time. Expired suppressions do
+not suppress a new scan. IDs derive from tool/rule/path/message plus duplicate
+occurrence, so shifted lines retain identity; identical duplicate findings can be
+ambiguous. Rename mappings are taken from Git when a baseline is available.
+
+Quality reports are supplied evidence, never measured accuracy. Failed/missing
+scanners and missing/mismatched baselines cannot be treated as a clean comparison.
+Importers bound report size, validate paths/ranges and preserve project-level findings.
+Unknown extension data remains in frontmatter; malformed known data is diagnosed
+and must not be interpreted as successful evidence.
+
 ## 6. Derived metrics
 
 Tools compute these; they are never stored in the file.
 
 - **Coverage** — the share of added lines (`+`) covered by at least one
   annotation. Uncovered added lines are code that arrived with no explanation.
-- **Verified coverage** — the share of added lines covered by an annotation with
-  at least one `verify` claim whose status is `pass`.
+- **Claimed verified coverage** (API: `verifiedCoverage`) — the share of added lines covered by an annotation with
+  at least one `verify` claim whose status is `pass`, with no failing claim on that note. This is author-reported
+  coverage, not fresh execution or a correctness score.
 - **Sourced share** — annotations with at least one `source` that is not
   `inference`.
 - **Open items** — `todo` and `question` fields, plus `fail`/`unknown` claims.

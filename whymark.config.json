@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "checks": [
+    {
+      "id": "eslint",
+      "format": "eslint",
+      "command": "node node_modules/eslint/bin/eslint.js . --format json --rule 'complexity: [warn, 15]' --rule 'max-depth: [warn, 4]'",
+      "versionCommand": "node node_modules/eslint/bin/eslint.js --version"
+    },
+    {
+      "id": "typecheck",
+      "format": "check",
+      "command": "npm run typecheck",
+      "versionCommand": "node node_modules/typescript/bin/tsc --version"
+    }
+  ],
+  "suppressions": []
+}

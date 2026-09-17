@@ -135,6 +135,7 @@ export function serializeNote(note: Note, wrap = 78): string {
   const field = (name: string, value: string) =>
     lines.push(...wrapField(name, value, wrap));
 
+  if (note.urgency) field("urgency", note.urgency);
   if (note.why) field("why", note.why);
   if (note.what) field("what", note.what);
   for (const source of note.sources) field("source", source.raw);

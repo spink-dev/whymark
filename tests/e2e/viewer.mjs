@@ -17,6 +17,8 @@ const check = (name, ok, detail = "") =>
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
 
+await page.addInitScript(() => localStorage.setItem("whymark.preferences.v1", JSON.stringify({ version: 1, syncScroll: true, collapseNotes: false, compactRail: false })));
+
 const consoleErrors = [];
 page.on("console", (msg) => {
   if (msg.type() === "error") consoleErrors.push(msg.text());

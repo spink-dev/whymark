@@ -8,6 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type RefObject,
 } from "react";
 import {
   FileDiff,
@@ -18,7 +19,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { layoutRail, type Anchor } from "@/lib/whymark/align";
+import { layoutCards, layoutRail, type Anchor } from "@/lib/whymark/align";
 import {
   NO_DECISIONS,
   partsOf,
@@ -88,6 +89,8 @@ interface FilePanelProps {
   activeNoteId: string | null;
   onActivate: (noteId: string | null) => void;
   compact: boolean;
+  syncScroll: boolean;
+  compactRail: boolean;
   index: number;
   /** Decisions collected so far for this file. */
   decisions?: FileDecisions;
@@ -104,6 +107,8 @@ export function FilePanel({
   activeNoteId,
   onActivate,
   compact,
+  syncScroll,
+  compactRail,
   index,
   decisions = NO_DECISIONS,
   onDecisions,
@@ -119,16 +124,22 @@ export function FilePanel({
   // view would spend half the width on an empty column.
   const oneSided = file.status === "added" || file.status === "deleted";
   const effectiveMode: ViewMode =
-    mode === "split" && oneSided ? "unified" : mode;
+    mode === "split" && (oneSided || compact) ? "unified" : mode;
 
   const rows = useMemo<DisplayRow[]>(
     () =>
       effectiveMode === "split"
-        ? toSplitRows(file.rows)
+        ? toSplitRows(file.rows, !compactRail)
         : toUnifiedRows(file.rows),
-    [file.rows, effectiveMode],
+    [file.rows, effectiveMode, compactRail],
   );
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const chooseNotes = (ids: string[]) => {
+    const visible = ids.filter(id => visibleNoteIds.has(id));
+    setSelectedIds(visible);
+    if (visible[0]) onActivate(visible[0]);
+  };
   const anchors = useMemo(() => anchorsForRows(rows, notes), [rows, notes]);
   const [heights, setHeights] = useState<Record<string, number>>({});
   const cardRefs = useRef(new Map<string, HTMLDivElement>());
@@ -158,24 +169,18 @@ export function FilePanel({
     return () => observer.disconnect();
   }, [measure, notes, compact]);
 
-  const rail = useMemo(
-    () =>
-      layoutRail(
-        anchors,
-        (id) => heights[id] ?? 132,
-        rows.length,
-        LINE_H,
-        CARD_GAP,
-      ),
-    [anchors, heights, rows.length],
-  );
+  const rail = useMemo(() => {
+    if (!compactRail) return layoutRail(anchors, id => heights[id] ?? 40, rows.length, LINE_H, CARD_GAP);
+    const tops = layoutCards(anchors, id => heights[id] ?? 40, row => row * LINE_H, 4);
+    return {
+      tops, padding: new Map<number, number>(), offsets: rows.map(() => 0),
+      height: Math.max(rows.length * LINE_H, ...anchors.map(anchor => (tops.get(anchor.noteId) ?? 0) + (heights[anchor.noteId] ?? 40))),
+    };
+  }, [anchors, heights, rows, compactRail]);
   const { tops, padding, offsets } = rail;
   const railHeight = rail.height;
 
   const highlighted = hovered ?? activeNoteId;
-  const highlightKind = highlighted
-    ? (file.notes.find((n) => n.id === highlighted)?.kind ?? null)
-    : null;
 
   /* ---- decisions -------------------------------------------------- */
 
@@ -245,9 +250,9 @@ export function FilePanel({
   const rowProps = {
     notes,
     highlighted,
-    highlightKind,
     onHover: setHovered,
     onActivate,
+    onChooseNotes: chooseNotes,
     decisions,
     canDecide,
     onToggle,
@@ -344,6 +349,17 @@ export function FilePanel({
         </span>
       </header>
 
+      {selectedIds.filter(id => visibleNoteIds.has(id)).length > 1 ? (
+        <nav aria-label="Comments on selected line" className="flex flex-wrap items-center gap-2 border-b px-3 py-2 text-xs">
+          <span>Comments on this line:</span>
+          {notes.filter(note => selectedIds.includes(note.id)).map(note => (
+            <button key={note.id} type="button" aria-pressed={activeNoteId === note.id} className="rounded border px-2 py-1 aria-pressed:bg-foreground/10" onClick={() => {
+              onActivate(note.id);
+              document.getElementById(`note-${note.id}`)?.scrollIntoView({ block: "nearest" });
+            }}>{KIND_META[note.kind].label} · {note.selector.raw}</button>
+          ))}
+        </nav>
+      ) : null}
       <div className="overflow-hidden rounded-b-xl">
         {notes.filter(
           (note) =>
@@ -378,7 +394,7 @@ export function FilePanel({
             }}
           >
             {effectiveMode === "split" ? (
-              <SplitBody rows={rows} padding={padding} {...rowProps} />
+              <SplitBody rows={rows} padding={padding} syncScroll={syncScroll} {...rowProps} />
             ) : (
               <UnifiedBody rows={rows} padding={padding} {...rowProps} />
             )}
@@ -400,7 +416,7 @@ export function FilePanel({
                 return (
                   <div
                     key={note.id}
-                    className="absolute right-2 left-1 transition-[top] duration-200"
+                    className="absolute right-2 left-1"
                     style={{ top: tops.get(note.id) ?? 0 }}
                   >
                     <NoteCard
@@ -442,9 +458,9 @@ export function FilePanel({
 interface RowProps {
   notes: Note[];
   highlighted: string | null;
-  highlightKind: string | null;
   onHover: (id: string | null) => void;
   onActivate: (id: string | null) => void;
+  onChooseNotes: (ids: string[]) => void;
   decisions: FileDecisions;
   canDecide: boolean;
   onToggle: (row: RowVM) => void;
@@ -486,33 +502,69 @@ function UnifiedBody({
 function SplitBody({
   rows,
   padding,
+  syncScroll,
   ...rowProps
-}: RowProps & { rows: DisplayRow[]; padding: Map<number, number> }) {
+}: RowProps & { rows: DisplayRow[]; padding: Map<number, number>; syncScroll: boolean }) {
+  const left = useRef<HTMLDivElement>(null);
+  const right = useRef<HTMLDivElement>(null);
+  const last = useRef<"del" | "add">("del");
+  useEffect(() => {
+    const a = left.current;
+    const b = right.current;
+    if (!a || !b) return;
+    const expected = new WeakMap<HTMLElement, number>();
+    const align = (source: HTMLElement, target: HTMLElement) => {
+      const next = Math.min(source.scrollLeft, Math.max(0, target.scrollWidth - target.clientWidth));
+      if (Math.abs(target.scrollLeft - next) < 0.5) return;
+      expected.set(target, next);
+      target.scrollLeft = next;
+    };
+    const scroll = (source: HTMLElement, target: HTMLElement, side: "del" | "add") => {
+      const pending = expected.get(source);
+      expected.delete(source);
+      if (pending !== undefined && Math.abs(source.scrollLeft - pending) < 0.5) return;
+      last.current = side;
+      if (syncScroll) align(source, target);
+    };
+    const onLeft = () => scroll(a, b, "del");
+    const onRight = () => scroll(b, a, "add");
+    const resize = () => {
+      if (syncScroll) align(last.current === "del" ? a : b, last.current === "del" ? b : a);
+    };
+    a.addEventListener("scroll", onLeft, { passive: true });
+    b.addEventListener("scroll", onRight, { passive: true });
+    const observer = new ResizeObserver(resize);
+    observer.observe(a); observer.observe(b);
+    resize();
+    return () => { a.removeEventListener("scroll", onLeft); b.removeEventListener("scroll", onRight); observer.disconnect(); };
+  }, [syncScroll]);
   return (
     <div
       data-whymark-body="split"
       className="grid border-r border-border/40"
       style={{ gridTemplateColumns: "minmax(0,1fr) 1px minmax(0,1fr)" }}
     >
-      <SplitColumn side="del" rows={rows} padding={padding} {...rowProps} />
+      <SplitColumn paneRef={left} side="del" rows={rows} padding={padding} {...rowProps} />
       <span className="bg-border/60" aria-hidden />
-      <SplitColumn side="add" rows={rows} padding={padding} {...rowProps} />
+      <SplitColumn paneRef={right} side="add" rows={rows} padding={padding} {...rowProps} />
     </div>
   );
 }
 
 function SplitColumn({
+  paneRef,
   side,
   rows,
   padding,
   ...rowProps
 }: RowProps & {
+  paneRef: RefObject<HTMLDivElement | null>;
   side: "add" | "del";
   rows: DisplayRow[];
   padding: Map<number, number>;
 }) {
   return (
-    <div data-whymark-side={side} className="whymark-scroll min-w-0 overflow-x-auto">
+    <div ref={paneRef} data-whymark-side={side} className="whymark-scroll min-w-0 overflow-x-auto">
       <div className="whymark-code w-max min-w-full">
         {rows.map((row, index) => (
           <Fragment key={row.key}>
@@ -566,18 +618,6 @@ function HunkRow({
   );
 }
 
-function rowTint(
-  isHighlighted: boolean,
-  highlightKind: string | null,
-  fallback?: string,
-): string | undefined {
-  if (isHighlighted && highlightKind) {
-    return `color-mix(in oklch, ${
-      KIND_META[highlightKind as keyof typeof KIND_META].color
-    } 13%, transparent)`;
-  }
-  return fallback;
-}
 
 function verdictStyle(verdict: LineVerdict): {
   className?: string;
@@ -600,9 +640,8 @@ function UnifiedRow({
   row,
   notes,
   highlighted,
-  highlightKind,
   onHover,
-  onActivate,
+  onChooseNotes,
   decisions,
   canDecide,
   onToggle,
@@ -629,11 +668,12 @@ function UnifiedRow({
   }
 
   const line = row.row!;
-  const covered = row.noteIds.length > 0;
+  const noteIds = notes.filter(note => row.noteIds.includes(note.id)).map(note => note.id);
+  const covered = noteIds.length > 0;
   const isHighlighted =
-    highlighted !== null && row.noteIds.includes(highlighted);
+    highlighted !== null && noteIds.includes(highlighted);
   const accentKind = covered
-    ? (notes.find((n) => n.id === row.noteIds[0])?.kind ?? "note")
+    ? (notes.find((n) => n.id === (isHighlighted ? highlighted : noteIds[0]))?.kind ?? "note")
     : null;
   const accent = accentKind ? KIND_META[accentKind].color : null;
   const verdict = verdictFor(line, decisions);
@@ -649,12 +689,15 @@ function UnifiedRow({
   return (
     <div
       className={cn("whymark-row group/row flex", covered && "cursor-pointer")}
-      data-notes={row.noteIds.join(" ") || undefined}
-      onMouseEnter={() => row.noteIds.length && onHover(row.noteIds[0])}
+      data-notes={noteIds.join(" ") || undefined}
+      data-highlighted={isHighlighted || undefined}
+      onMouseEnter={() => noteIds.length && onHover(noteIds.includes(highlighted ?? "") ? highlighted : noteIds[0])}
       onMouseLeave={() => onHover(null)}
-      onClick={() => row.noteIds.length && onActivate(row.noteIds[0])}
+      onClick={() => noteIds.length && onChooseNotes(noteIds)}
       style={{
-        backgroundColor: rowTint(isHighlighted, highlightKind, marker.bg),
+        backgroundColor: marker.bg,
+        outline: isHighlighted ? "1px solid var(--foreground)" : undefined,
+        outlineOffset: -1,
         boxShadow: decorate.boxShadow,
       }}
     >
@@ -670,6 +713,7 @@ function UnifiedRow({
       <span className="whymark-gutter w-11 shrink-0 pr-2 text-right text-[11px] tabular-nums">
         {line.newLine ?? ""}
       </span>
+      <button type="button" disabled={!covered} aria-label={`${noteIds.length} comments on line ${line.newLine ?? line.oldLine}`} onClick={event => { event.stopPropagation(); onChooseNotes(noteIds); }} className="w-5 shrink-0 text-[10px] text-muted-foreground disabled:invisible hover:bg-foreground/10">{noteIds.length}</button>
       <span
         className="w-[3px] shrink-0"
         style={{ backgroundColor: accent ?? "transparent" }}
@@ -705,9 +749,8 @@ function SplitRow({
   side,
   notes,
   highlighted,
-  highlightKind,
   onHover,
-  onActivate,
+  onChooseNotes,
   decisions,
   canDecide,
   onToggle,
@@ -734,11 +777,12 @@ function SplitRow({
   }
 
   const cell = side === "add" ? row.right : row.left;
-  const covered = row.noteIds.length > 0;
+  const noteIds = notes.filter(note => cell?.noteIds.includes(note.id)).map(note => note.id);
+  const covered = noteIds.length > 0;
   const isHighlighted =
-    highlighted !== null && row.noteIds.includes(highlighted);
+    highlighted !== null && noteIds.includes(highlighted);
   const accentKind = covered
-    ? (notes.find((n) => n.id === row.noteIds[0])?.kind ?? "note")
+    ? (notes.find((n) => n.id === (isHighlighted ? highlighted : noteIds[0]))?.kind ?? "note")
     : null;
   const accent = accentKind ? KIND_META[accentKind].color : null;
 
@@ -746,8 +790,9 @@ function SplitRow({
     return (
       <div
         className="whymark-row flex bg-foreground/[0.02]"
-        data-notes={row.noteIds.join(" ") || undefined}
-        style={{ backgroundColor: rowTint(isHighlighted, highlightKind) }}
+        data-notes={noteIds.join(" ") || undefined}
+        data-highlighted={isHighlighted || undefined}
+        style={{ outline: isHighlighted ? "1px solid var(--foreground)" : undefined, outlineOffset: -1 }}
       >
         <span className="w-5 shrink-0" aria-hidden />
         <span className="whymark-gutter w-11 shrink-0" />
@@ -762,20 +807,15 @@ function SplitRow({
   return (
     <div
       className={cn("whymark-row group/row flex", covered && "cursor-pointer")}
-      data-notes={row.noteIds.join(" ") || undefined}
-      onMouseEnter={() => row.noteIds.length && onHover(row.noteIds[0])}
+      data-notes={noteIds.join(" ") || undefined}
+      data-highlighted={isHighlighted || undefined}
+      onMouseEnter={() => noteIds.length && onHover(noteIds.includes(highlighted ?? "") ? highlighted : noteIds[0])}
       onMouseLeave={() => onHover(null)}
-      onClick={() => row.noteIds.length && onActivate(row.noteIds[0])}
+      onClick={() => noteIds.length && onChooseNotes(noteIds)}
       style={{
-        backgroundColor: rowTint(
-          isHighlighted,
-          highlightKind,
-          changed
-            ? side === "add"
-              ? "var(--whymark-add-bg)"
-              : "var(--whymark-del-bg)"
-            : undefined,
-        ),
+        backgroundColor: changed ? (side === "add" ? "var(--whymark-add-bg)" : "var(--whymark-del-bg)") : undefined,
+        outline: isHighlighted ? "1px solid var(--foreground)" : undefined,
+        outlineOffset: -1,
         boxShadow: decorate.boxShadow,
       }}
     >
@@ -788,6 +828,7 @@ function SplitRow({
       <span className="whymark-gutter w-11 shrink-0 pr-2 text-right text-[11px] tabular-nums">
         {side === "add" ? (cell.newLine ?? "") : (cell.oldLine ?? "")}
       </span>
+      <button type="button" disabled={!covered} aria-label={`${noteIds.length} comments on line ${side === "add" ? cell.newLine : cell.oldLine}`} onClick={event => { event.stopPropagation(); onChooseNotes(noteIds); }} className="w-5 shrink-0 text-[10px] text-muted-foreground disabled:invisible hover:bg-foreground/10">{noteIds.length}</button>
       <span
         className="w-[3px] shrink-0"
         style={{ backgroundColor: accent ?? "transparent" }}
@@ -1014,7 +1055,7 @@ function toUnifiedRows(rows: RowVM[]): DisplayRow[] {
   }));
 }
 
-function toSplitRows(rows: RowVM[]): DisplayRow[] {
+function toSplitRows(rows: RowVM[], alignCards: boolean): DisplayRow[] {
   const out: DisplayRow[] = [];
   let i = 0;
   let pair = 0;
@@ -1051,24 +1092,9 @@ function toSplitRows(rows: RowVM[]): DisplayRow[] {
     for (let k = 0; k < height; k++) {
       const left = dels[k] ?? null;
       const right = adds[k] ?? null;
-      // Two annotations that land on one row cannot both sit level with it, and
-      // one of them ends up adrift from the line it explains. Lines carrying
-      // different notes therefore get a row each, still in their own column.
-      if (left && right && !sameNotes(left.noteIds, right.noteIds)) {
-        out.push({
-          key: `p${pair++}`,
-          kind: "pair",
-          noteIds: left.noteIds,
-          left,
-          right: null,
-        });
-        out.push({
-          key: `p${pair++}`,
-          kind: "pair",
-          noteIds: right.noteIds,
-          left: null,
-          right,
-        });
+      if (alignCards && left?.noteIds.length && right?.noteIds.length && (left.noteIds.length !== right.noteIds.length || left.noteIds.some(id => !right.noteIds.includes(id)))) {
+        out.push({ key: `p${pair++}`, kind: "pair", noteIds: left.noteIds, left, right: null });
+        out.push({ key: `p${pair++}`, kind: "pair", noteIds: right.noteIds, left: null, right });
         continue;
       }
       out.push({
@@ -1082,11 +1108,6 @@ function toSplitRows(rows: RowVM[]): DisplayRow[] {
   }
 
   return out;
-}
-
-function sameNotes(a: string[], b: string[]): boolean {
-  if (!a.length || !b.length) return true;
-  return a.length === b.length && a.every((id) => b.includes(id));
 }
 
 function anchorsForRows(rows: DisplayRow[], notes: Note[]): Anchor[] {

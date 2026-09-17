@@ -1,6 +1,8 @@
 import YAML from "yaml";
 import {
   WHYMARK_VERSION,
+  URGENCIES,
+  type Urgency,
   NOTE_KINDS,
   VERIFY_METHODS,
   type WhymarkDocument,
@@ -64,6 +66,7 @@ const KNOWN_FIELDS = new Set([
   ...REPEATABLE,
   "kind",
   "risk",
+  "urgency",
   "confidence",
   "id",
 ]);
@@ -760,6 +763,11 @@ function parseNoteHeader(
       });
   }
 
+  const urgency = URGENCIES.includes(attrs.urgency as Urgency) ? attrs.urgency as Urgency : undefined;
+  if (attrs.urgency && !urgency) diagnostics.push({
+    level: "warning", code: "urgency-unknown", message: `Unknown urgency ${attrs.urgency}; preserved as a field.`, line: lineNo,
+  });
+
   let confidence: number | undefined;
   if (attrs.confidence) {
     const value = Number(attrs.confidence.replace("%", ""));
@@ -796,6 +804,7 @@ function parseNoteHeader(
     selector,
     kind,
     risk,
+    urgency,
     confidence,
     sources: [],
     verify: [],
@@ -804,7 +813,7 @@ function parseNoteHeader(
     questions: [],
     refs: [],
     body: "",
-    extra: {},
+    extra: attrs.urgency && !urgency ? { urgency: [attrs.urgency] } : {},
     sourceLine: lineNo,
     file: filePath,
   };
@@ -897,6 +906,15 @@ function setField(
         ctx.lastField = { name: "ref", index: note.refs.length - 1 };
         return;
     }
+  }
+
+  if (key === "urgency") {
+    if (URGENCIES.includes(value as Urgency)) {
+      note.urgency = value as Urgency;
+      ctx.lastField = null;
+      return;
+    }
+    diagnostics.push({ level: "warning", code: "urgency-unknown", message: `Unknown urgency ${value}; preserved as a field.`, line: lineNo, noteId: note.id });
   }
 
   // Attributes are allowed as fields too, which is how models often write them.

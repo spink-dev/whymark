@@ -50,6 +50,9 @@ export const NOTE_KINDS: NoteKind[] = [
   "note",
 ];
 
+export const URGENCIES = ["info", "normal", "urgent", "blocking"] as const;
+export type Urgency = (typeof URGENCIES)[number];
+
 export type Risk = "low" | "medium" | "high";
 
 export type VerifyStatus = "pass" | "fail" | "unknown" | "skipped";
@@ -121,6 +124,7 @@ export interface Note {
   selector: Selector;
   kind: NoteKind;
   risk?: Risk;
+  urgency?: Urgency;
   confidence?: number;
   why?: string;
   what?: string;

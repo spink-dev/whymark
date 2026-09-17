@@ -10,6 +10,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # whymark
 
+Read `~/.vault/projects/whymark/README.md` for shared project context before work.
+Feature requirements and delivery plans live in `specs/`; the review file format
+remains in `spec/whymark-v1.md`.
+
 This repository defines the whymark review format (`spec/whymark-v1.md`), its tooling
 (`src/lib/whymark`, `src/cli/whymark.ts`), and a viewer for it (`src/app`).
 

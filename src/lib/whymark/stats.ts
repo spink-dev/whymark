@@ -70,7 +70,7 @@ export function coveredLines(file: FileSection): {
 }
 
 export function hasPassingVerify(note: Note): boolean {
-  return note.verify.some((v) => v.status === "pass" && v.method !== "none");
+  return !note.verify.some(v => v.status === "fail") && note.verify.some((v) => v.status === "pass" && v.method !== "none");
 }
 
 export function addedLineNumbers(file: FileSection): number[] {

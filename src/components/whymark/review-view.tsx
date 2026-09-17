@@ -27,6 +27,12 @@ import { CoverageBar, Ring, Stat } from "./meters";
 import { Markdown } from "./markdown";
 import { NoteCard } from "./note-card";
 import { useMediaQuery } from "./use-media-query";
+import { QualityPanel } from "./quality-panel";
+import { EvidencePanel } from "./evidence-panel";
+import { NoteDisclosure } from "./note-disclosure";
+import { ReviewSettings } from "./review-settings";
+import { useReviewPreferences } from "./use-review-preferences";
+import { type ReviewPreferences } from "@/lib/review-preferences";
 import { hasPassingVerify } from "@/lib/whymark/stats";
 
 interface ReviewViewProps {
@@ -40,8 +46,28 @@ interface ReviewViewProps {
 
 export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
   const compact = !useMediaQuery("(min-width: 1180px)", true);
-  const [mode, setMode] = useState<ViewMode>("unified");
+  const [preferences, setPreferences] = useReviewPreferences();
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  const [disclosures, setDisclosures] = useState<Record<string, boolean>>({});
+  const updatePreferences = (next: ReviewPreferences) => {
+    setPreferences(next);
+    if (next.collapseNotes !== preferences.collapseNotes) setDisclosures({});
+  };
+  const activate = useCallback((id: string | null) => {
+    setActiveNoteId(id);
+    if (id) setDisclosures(current => ({ ...current, [id]: true }));
+  }, []);
+  useEffect(() => {
+    const reveal = () => {
+      let hash: string;
+      try { hash = decodeURIComponent(window.location.hash.slice(1)); } catch { return; }
+      if (hash.startsWith("note-")) activate(hash.slice(5));
+    };
+    const frame = requestAnimationFrame(reveal);
+    window.addEventListener("hashchange", reveal);
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("hashchange", reveal); };
+  }, [activate]);
+  const [mode, setMode] = useState<ViewMode>("unified");
   const [kindFilter, setKindFilter] = useState<Set<NoteKind>>(new Set());
   const [onlyUnverified, setOnlyUnverified] = useState(false);
   const [onlyInference, setOnlyInference] = useState(false);
@@ -74,10 +100,8 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
 
   const orderedVisible = useMemo(
     () =>
-      review.files
-        .flatMap((file) => file.notes)
-        .filter((note) => visibleNoteIds.has(note.id)),
-    [review.files, visibleNoteIds],
+      allNotes.filter((note) => visibleNoteIds.has(note.id)),
+    [allNotes, visibleNoteIds],
   );
 
   const jump = useCallback(
@@ -89,13 +113,13 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
           (index + delta + orderedVisible.length * 2) % orderedVisible.length
         ];
       if (!next) return;
-      setActiveNoteId(next.id);
+      activate(next.id);
       const element = document.getElementById(`note-${next.id}`);
       element?.scrollIntoView({ behavior: "smooth", block: "center" });
       element?.classList.remove("whymark-flash");
       requestAnimationFrame(() => element?.classList.add("whymark-flash"));
     },
-    [orderedVisible, activeNoteId],
+    [orderedVisible, activeNoteId, activate],
   );
 
   const setFileDecisions = useCallback((path: string, next: FileDecisions) => {
@@ -215,7 +239,7 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
     const onKey = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       const target = event.target as HTMLElement | null;
-      if (target && /input|textarea|select/i.test(target.tagName)) return;
+      if (target && (/input|textarea|select/i.test(target.tagName) || target.isContentEditable || target.closest('[role="dialog"]'))) return;
 
       switch (event.key) {
         case "j":
@@ -255,10 +279,14 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
     (issue) => issue.code === "review-stale" || issue.code === "file-missing",
   );
   const problems = issues.filter(
-    (issue) => issue.level === "error" || issue.code === "note-stub",
+    (issue) => issue.level === "error" || ["note-stub", "source-unavailable", "evidence-invalid", "quality-invalid"].includes(issue.code),
   );
 
   return (
+    <NoteDisclosure.Provider value={{
+      expanded: id => disclosures[id] ?? !preferences.collapseNotes,
+      toggle: id => setDisclosures(current => ({ ...current, [id]: !(current[id] ?? !preferences.collapseNotes) })),
+    }}>
     <div className="min-h-dvh">
       <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/70 bg-[color-mix(in_oklch,var(--background)_88%,transparent)] px-4 backdrop-blur-md">
         {onBack ? (
@@ -295,7 +323,7 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
           />
           <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Check className="size-3" style={{ color: STATUS_COLOR.pass }} />
-            {Math.round(stats.verifiedCoverage * 100)}% verified
+            {Math.round(stats.verifiedCoverage * 100)}% claimed verified
           </span>
         </div>
 
@@ -334,6 +362,8 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
             split
           </button>
         </div>
+
+        <ReviewSettings value={preferences} onChange={updatePreferences} />
 
         <button
           onClick={() => setShowHelp(true)}
@@ -404,15 +434,15 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
               </details>
             ) : null}
 
-            {review.docNotes.length ? (
+            {review.docNotes.some(note => visibleNoteIds.has(note.id)) ? (
               <div className="space-y-2">
-                {review.docNotes.map((note) => (
+                {review.docNotes.filter(note => visibleNoteIds.has(note.id)).map((note) => (
                   <NoteCard
                     key={note.id}
                     note={note}
                     scopeLabel="whole change"
                     active={activeNoteId === note.id}
-                    onSelect={setActiveNoteId}
+                    onSelect={activate}
                   />
                 ))}
               </div>
@@ -435,7 +465,7 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
                 <div className="text-[12.5px] font-medium">
                   {Math.round(stats.verifiedCoverage * 100)}%
                 </div>
-                <div className="text-[11.5px] text-muted-foreground">verified</div>
+                <div className="text-[11.5px] text-muted-foreground">claimed verified</div>
               </div>
             </div>
 
@@ -520,6 +550,8 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
           </div>
         </div>
 
+        <div className="mt-4"><EvidencePanel evidence={review.evidence} /><QualityPanel report={review.quality} state={review.qualityState} files={review.files} /></div>
+
         {/* filters */}
         <div className="mt-5 flex flex-wrap items-center gap-1.5 border-y border-border/60 py-2.5">
           <span className="mr-1 text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -589,6 +621,8 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
             </button>
           ) : null}
 
+          <button className="rounded border px-2 py-0.5 text-[11px]" onClick={() => setDisclosures(Object.fromEntries(allNotes.map(note => [note.id, false])))}>Collapse all</button>
+          <button className="rounded border px-2 py-0.5 text-[11px]" onClick={() => setDisclosures(Object.fromEntries(allNotes.map(note => [note.id, true])))}>Expand all</button>
           <span className="ml-auto text-[11px] text-muted-foreground">
             {visibleNoteIds.size} of {allNotes.length} shown ·{" "}
             <kbd className="rounded border border-border/70 px-1 font-mono text-[10px]">j</kbd>{" "}
@@ -606,9 +640,11 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
               index={index}
               mode={mode}
               compact={compact}
+              syncScroll={preferences.syncScroll}
+              compactRail={preferences.compactRail}
               visibleNoteIds={visibleNoteIds}
               activeNoteId={activeNoteId}
-              onActivate={setActiveNoteId}
+              onActivate={activate}
               editable={Boolean(slug)}
               decisions={decisions[file.path]}
               onDecisions={setFileDecisions}
@@ -643,6 +679,7 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
 
       {showHelp ? <HelpOverlay onClose={() => setShowHelp(false)} /> : null}
     </div>
+    </NoteDisclosure.Provider>
   );
 }
 

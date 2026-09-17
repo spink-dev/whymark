@@ -1,3 +1,6 @@
+import { readQuality } from "./quality/import";
+import type { QualityReport } from "./quality/types";
+import { evidenceViews, type EvidenceView } from "./whymark/evidence";
 import { buildRows } from "@/lib/whymark/align";
 import { inlineParts, linePairs, type InlinePart } from "@/lib/whymark/inline";
 import { languageFor } from "@/lib/whymark/lang";
@@ -42,6 +45,9 @@ export interface FileVM {
 }
 
 export interface ReviewVM {
+  evidence: EvidenceView[];
+  quality: QualityReport | null;
+  qualityState: "current" | "stale" | "unchecked";
   meta: Meta;
   files: FileVM[];
   docNotes: Note[];
@@ -51,7 +57,7 @@ export interface ReviewVM {
 
 export async function buildReviewVM(
   doc: WhymarkDocument,
-  options: { isWritable?: (file: FileSection) => boolean } = {},
+  options: { isWritable?: (file: FileSection) => boolean; evidence?: EvidenceView[]; source?: string | null; reviewHash?: string } = {},
 ): Promise<ReviewVM> {
   const stats = computeStats(doc);
   const files: FileVM[] = [];
@@ -108,7 +114,11 @@ export async function buildReviewVM(
     });
   }
 
+  const quality = readQuality(doc.meta.extra.quality);
   return {
+    quality,
+    qualityState: !quality || !options.source ? "unchecked" : quality.source === options.source && quality.sourceAfter === options.source && quality.reviewHash === options.reviewHash ? "current" : "stale",
+    evidence: options.evidence ?? evidenceViews(doc),
     meta: doc.meta,
     files,
     docNotes: doc.notes,

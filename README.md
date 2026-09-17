@@ -290,3 +290,64 @@ and takes none of its permissions away.
 Stating this in the licence is the same argument the format makes. A reader
 deciding whether to trust code is better served by knowing how it was produced
 and where the review stopped than by an unqualified assurance.
+
+## Agent skill from npm
+
+The private Git repository is not required. The npm package includes the skill,
+format reference and a working example embedded in the skill.
+
+```sh
+npx whymark@<version> skill install --dry-run
+npx whymark@<version> skill install --agent codex --agent claude-code
+# Optional: install in your user directory rather than this project
+npx whymark@<version> skill install --agent codex --global
+```
+
+Replace `<version>` with the published release. These commands are implemented in
+this checkout; a new release must be published before they are available from npm.
+The default target is project-local Codex. Identical files are unchanged; customized
+files require `--force`. Symlink destinations are refused. Installation never
+changes unrelated agent instruction files. `init` still means `new`, not skill installation.
+
+## Compact reviews and settings
+
+A line can carry multiple comments; its count button opens a selector for each.
+Comments collapse independently while type, urgency, line selector and author
+confidence stay visible. Missing confidence is shown as unknown. Settings control
+horizontal split-pane synchronization, default disclosure and compact layout.
+Preferences stay in this browser with a session fallback when storage is blocked.
+
+## Checks without AI
+
+```sh
+npx whymark quality init
+# Inspect whymark.config.json first; --run executes its local shell commands.
+npx whymark quality reviews/change.whymark --run --write
+npx whymark quality reviews/change.whymark --run > reviews/baseline.quality.json
+npx whymark quality reviews/change.whymark --run --baseline reviews/baseline.quality.json --write
+# Debounced rescans; superseded commands are cancelled. Ctrl-C stops watching.
+npx whymark quality reviews/change.whymark --run --watch --write
+# Import existing output without executing anything
+npx whymark quality reviews/change.whymark --import eslint.json --tool-version 9 --write
+```
+
+Start with the generated ESLint and TypeScript commands and adapt them to your
+repository. The ESLint command includes configurable complexity (15) and nesting (4)
+warnings. Run checks in full project context; the viewer can filter findings to
+changed lines. Missing tools are unavailable, not passing. A baseline needs a clean source checkout with HEAD matching the review's base
+(short review hashes are resolved through Git) and matching tool versions/commands;
+create it on the base checkout with configuration already committed. Comparison separates new, existing and resolved findings, handles
+Git-detected renames, and ignores line shifts. Use a `.quality.json` file under
+`reviews/` or outside the checkout for snapshots, so the report does not fingerprint
+itself. Findings have stable IDs; `suppressions` entries in configuration require
+`id`, `reason` and a future `expires` date. Checks are advisory to repository policy;
+the command exits nonzero for failed/unavailable checks and unsuppressed errors.
+
+`verify --write` records execution metadata, output hashes and source fingerprints.
+The local viewer checks source freshness and execution log hashes; imported evidence
+remains unauthenticated. “Claimed verified” is an author claim, not measured code
+accuracy. Fingerprints exclude ignored files, `.artifacts/`, and review outputs in
+`reviews/`; they include tests/config/lockfiles but do not cover installed dependency
+bytes or external services. Inspect output logs before sharing. No command runs just
+by opening a review. Optional Knip, Semgrep, audit and coverage adapters remain future
+integrations; the current quality adapter is ESLint plus configured pass/fail checks.

@@ -1,0 +1,43 @@
+---
+whymark: 1
+title: Multiple comments and stable diff colors
+scope: manual
+summary: A fixture for overlapping annotations and horizontal scrolling.
+---
+
+@file example.ts modified +3 -3
+@@ -1,3 +1,3 @@
+-export const first = "old value with a deliberately long line for horizontal scrolling: abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz";
+-export const second = 2;
+-export const third = 3;
++export const first = "new value with a deliberately long line for horizontal scrolling: abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz";
++export const second = 20;
++export const third = 30;
+
+@note +1 kind=security risk=high confidence=0.8 id=security
+urgency: urgent
+why: Validate the new value at the boundary because downstream consumers assume it is trusted.
+source: inference — fixture only
+verify: none
+
+@note +1 kind=intent confidence=0.7 id=intent
+urgency: normal
+why: Keep the descriptive value so callers can inspect its purpose before using it.
+verify: none
+
+@note +1..2 kind=test id=overlap
+why: The same value has a second consumer, so the regression needs both call paths.
+verify: none
+
+@note -1 kind=security id=old-security
+why: The removed value was previously treated as trusted without validation.
+verify: none
+
+@note +3 kind=note id=last
+why: Preserve the separate third case so adjacent comment layout remains readable.
+verify: none
+
+@file second.ts modified +1 -1
+@@ -1 +1 @@
+-export const x = 1;
++export const x = "long right-only overflow abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz";

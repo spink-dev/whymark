@@ -1,3 +1,5 @@
+import { readEvidence } from "./evidence";
+import { readQuality } from "../quality/import";
 import { computeStats, hasPassingVerify, type DocStats } from "./stats";
 import { allNotes, isStub, type WhymarkDocument, type Diagnostic } from "./types";
 
@@ -42,6 +44,13 @@ export function validateDocument(
       code: "document-empty",
       message: "Document contains no file sections and no notes.",
     });
+  }
+
+  if (doc.meta.extra.evidence !== undefined && (!Array.isArray(doc.meta.extra.evidence) || readEvidence(doc.meta.extra.evidence).length !== doc.meta.extra.evidence.length)) {
+    diagnostics.push({ level: "warning", code: "evidence-invalid", message: "Malformed execution evidence was preserved but cannot establish verification." });
+  }
+  if (doc.meta.extra.quality !== undefined && !readQuality(doc.meta.extra.quality)) {
+    diagnostics.push({ level: "warning", code: "quality-invalid", message: "Malformed quality report was preserved but cannot establish a clean scan." });
   }
 
   if (!doc.meta.summary?.trim()) {

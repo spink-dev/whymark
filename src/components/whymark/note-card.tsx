@@ -1,9 +1,10 @@
 "use client";
 
 import { forwardRef } from "react";
-import { CircleHelp, ListTodo, Shuffle, Waypoints } from "lucide-react";
+import { ChevronDown, ChevronRight, CircleHelp, ListTodo, Shuffle, Waypoints } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Note } from "@/lib/whymark/types";
+import { useNoteDisclosure } from "./note-disclosure";
 import { KIND_META } from "./meta";
 import { Markdown, inline } from "./markdown";
 import { Confidence, RiskPill, SourceRow, VerifyRow } from "./pills";
@@ -22,6 +23,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(function NoteC
   { note, active, dimmed, onHover, onSelect, scopeLabel },
   ref,
 ) {
+  const { expanded, toggle } = useNoteDisclosure(note.id);
   const kind = KIND_META[note.kind] ?? KIND_META.note;
   const Icon = kind.icon;
 
@@ -31,13 +33,14 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(function NoteC
       id={`note-${note.id}`}
       onMouseEnter={() => onHover?.(note.id)}
       onMouseLeave={() => onHover?.(null)}
-      onClick={() => onSelect?.(note.id)}
+      onFocus={() => onHover?.(note.id)}
+      onBlur={() => onHover?.(null)}
       className={cn(
         "group cursor-default rounded-lg border bg-card/80 shadow-sm backdrop-blur-[2px] transition-all",
         active
           ? "border-transparent ring-1 shadow-md"
           : "border-border/60 hover:border-border",
-        dimmed && "opacity-35",
+        dimmed && "opacity-65",
       )}
       style={{
         borderLeft: `2px solid ${kind.color}`,
@@ -49,7 +52,10 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(function NoteC
           : {}),
       }}
     >
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 pt-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-1.5">
+        <button type="button" aria-label={`${expanded ? "Collapse" : "Expand"} comment ${note.id}`} aria-expanded={expanded} aria-controls={`comment-body-${note.id}`} onClick={toggle} className="rounded p-0.5 hover:bg-foreground/10">
+          {expanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+        </button>
         <span
           className="inline-flex items-center gap-1 text-[11px] font-medium"
           style={{ color: kind.color }}
@@ -58,16 +64,17 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(function NoteC
           <Icon className="size-3" />
           {kind.label}
         </span>
-        <span className="font-mono text-[11px] text-muted-foreground">
+        <button type="button" onClick={() => onSelect?.(note.id)} className="font-mono text-[11px] text-muted-foreground hover:underline" aria-label={`Select comment ${note.id}`}>
           {scopeLabel ?? note.selector.raw}
-        </span>
+        </button>
         <span className="ml-auto flex items-center gap-1.5">
-          {note.risk ? <RiskPill risk={note.risk} /> : null}
-          {note.confidence !== undefined ? <Confidence value={note.confidence} /> : null}
+          <span className="text-[10px] text-muted-foreground" title="Priority to act, independent of risk">{note.urgency ?? "unspecified"}</span>
+          {note.confidence !== undefined ? <Confidence value={note.confidence} /> : <span className="text-[10px] text-muted-foreground">confidence unknown</span>}
         </span>
       </div>
 
-      <div className="space-y-2 px-2.5 pt-1.5 pb-2.5">
+      <div id={`comment-body-${note.id}`} hidden={!expanded} className="space-y-2 px-2.5 pt-1 pb-2.5">
+        {note.risk ? <RiskPill risk={note.risk} /> : null}
         {note.why ? (
           <p className="text-[13px] leading-[1.5] text-foreground/95">{inline(note.why)}</p>
         ) : null}

@@ -7,6 +7,26 @@ export type Palette = {
 };
 
 const TOPICS: Record<string, { aliases: string[]; render: (c: Palette) => string }> = {
+  quality: { aliases: [], render: () => `npx whymark quality init
+npx whymark quality <review.whymark> --run [--write] [--baseline report.quality.json]
+npx whymark quality <review.whymark> --run --watch --write
+npx whymark quality <review.whymark> --import eslint.json --tool-version <version> [--write]
+
+init writes whymark.config.json without overwriting it. Inspect its commands before
+--run: configured commands execute locally. Opening a review never runs them.
+--watch cancels superseded scans and debounces repository changes. Ctrl-C stops it.
+--config <path> selects trusted local configuration. --baseline compares a saved
+report whose head matches the review base; otherwise findings stay uncompared.
+JSON goes to stdout. --write also attaches results to the review. Imported ESLint
+JSON is evidence supplied by its author, not a fresh execution. No AI is required.
+` },
+  skill: { aliases: [], render: () => `npx whymark skill install [--agent codex|claude-code] [--global] [--dry-run] [--force]
+
+Installs the bundled agent skill and format reference without Git access.
+Default: project-local Codex skill. Repeat --agent to install both targets.
+--dry-run previews all paths; identical files are left alone. --force explicitly
+replaces customized skill files. No postinstall hooks or instruction-file edits.
+` },
   new: { aliases: ["init"], render: helpNew },
   prompt: { aliases: [], render: helpPrompt },
   validate: { aliases: ["check"], render: helpValidate },
@@ -62,6 +82,8 @@ ${c.bold("WORKFLOW")}
   5.  open https://whymark.x47.dev     drop the file; it stays in the browser
 
 ${c.bold("COMMANDS")}
+  quality      configured local checks and ESLint findings
+  skill        install the bundled agent skill from npm
   new          skeleton from a git diff                 ${c.gray("alias: init")}
   prompt       authoring prompt with the diff embedded
   validate     structure, staleness, coverage           ${c.gray("alias: check")}

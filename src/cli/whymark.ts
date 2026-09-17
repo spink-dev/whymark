@@ -10,6 +10,8 @@ import { validateDocument } from "../lib/whymark/validate";
 import { validateDocumentInRepo } from "../lib/whymark/validate-tree";
 import { summariseResults, verifyDocument, type ClaimResult } from "../lib/whymark/verify";
 import type { Scope } from "../lib/whymark/types";
+import { qualityCommand } from "./quality";
+import { installSkill } from "../lib/skill/install";
 import { renderHelp } from "./help";
 
 const c = colors();
@@ -116,6 +118,16 @@ function main() {
     return cmdHelp(isHelpToken(args.command) ? args.positionals[0] : args.command);
   }
   switch (args.command) {
+    case "quality":
+      return qualityCommand(args.positionals, { run: args.has("run"), watch: args.has("watch"), write: args.has("write"), config: args.str("config"), baseline: args.str("baseline"), importPath: args.str("import"), toolVersion: args.str("tool-version") }).catch(error => fail((error as Error).message));
+    case "skill": {
+      if (args.positionals[0] !== "install") fail("Usage: npx whymark skill install [--agent codex|claude-code] [--global] [--dry-run] [--force]");
+      try {
+        const result = installSkill({ packageRoot: packageRoot(), cwd: process.cwd(), agents: args.all("agent"), global: args.has("global"), dryRun: args.has("dry-run"), force: args.has("force") });
+        for (const item of result) process.stdout.write(`${item.action} ${item.path}\n`);
+      } catch (error) { fail((error as Error).message); }
+      return;
+    }
     case "new":
     case "init":
       return cmdNew(args);
@@ -265,7 +277,7 @@ function cmdPrompt(args: Args) {
   process.stdout.write(
     template.replace("{{SKELETON}}", skeleton.trimEnd()).replace(
       "{{SPEC_PATH}}",
-      specInRepo ? "spec/whymark-v1.md" : "https://github.com/spink-dev/whymark/blob/main/spec/whymark-v1.md",
+      specInRepo ? "spec/whymark-v1.md" : join(pack, "spec/whymark-v1.md"),
     ),
   );
 }
@@ -345,7 +357,7 @@ function printValidation(
   }
   process.stdout.write(
     `  ${bar(stats.coverage)} ${c.bold(percent(stats.coverage))} of ${stats.added} added lines annotated · ` +
-      `${percent(stats.verifiedCoverage)} verified · ${stats.notes} notes · ` +
+      `${percent(stats.verifiedCoverage)} claimed verified · ${stats.notes} notes · ` +
       `${stats.sourced} sourced / ${stats.inferenceOnly} inference-only\n`,
   );
   const verdict = result.ok
@@ -372,6 +384,8 @@ function cmdVerify(args: Args) {
 
   const results = verifyDocument(doc, {
     cwd,
+    recordEvidence: args.has("write"),
+    toolVersion: pkgVersion(),
     filter: filter ? new RegExp(filter) : undefined,
     onStart: (cmd) => {
       if (!json) process.stdout.write(`${c.gray("→ running")} ${cmd}\n`);
@@ -399,7 +413,7 @@ function cmdVerify(args: Args) {
     if (!json) process.stdout.write(`${c.green("✓")} updated ${path} with real results\n`);
   }
 
-  process.exit(summary.contradicted > 0 ? 1 : 0);
+  process.exit(summary.contradicted > 0 || summary.unrunnable > 0 || results.some(result => result.run?.status === "fail") ? 1 : 0);
 }
 
 function outcomeLabel(result: ClaimResult): string {

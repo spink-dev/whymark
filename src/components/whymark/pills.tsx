@@ -62,7 +62,7 @@ export function Confidence({ value }: { value: number }) {
           />
         ))}
       </span>
-      {pct}%
+      {pct}% confidence
     </span>
   );
 }
@@ -71,7 +71,7 @@ export function SourceRow({ source }: { source: SourceRef }) {
   const meta = SOURCE_META[source.type] ?? SOURCE_META.other;
   const Icon = meta.icon;
   const isInference = source.type === "inference";
-  const href = source.type === "url" || /^https?:\/\//.test(source.locator) ? source.locator : null;
+  const href = /^https?:\/\//.test(source.locator) ? source.locator : null;
 
   return (
     <li
@@ -128,7 +128,7 @@ export function VerifyRow({ claim }: { claim: VerifyClaim }) {
             className="text-[10px] font-medium uppercase tracking-wide"
             style={{ color }}
           >
-            {STATUS_LABEL[claim.status]}
+            {claim.method === "none" ? STATUS_LABEL[claim.status] : `claimed ${STATUS_LABEL[claim.status]}`}
           </span>
           <span className="text-[10px] text-muted-foreground">{meta.label}</span>
         </div>

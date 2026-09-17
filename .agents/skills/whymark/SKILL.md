@@ -51,7 +51,8 @@ npx whymark stats    reviews/<slug>.whymark
 real result. Run it. If a claim is contradicted, fix the code or the claim
 before handing the review over.
 
-Aim for **≥80% line coverage** and zero stubs. Then tell the user to open the
+Aim for zero stubs and meaningful coverage of decisions. Do not add filler merely
+to reach a percentage. Then tell the user to open the
 review at `/r/<slug>` (`npm run dev`).
 
 ## Annotating
@@ -77,7 +78,11 @@ means two annotations.
 `generated`, `note`.
 
 **`risk`** = blast radius if you are wrong (`low`/`medium`/`high`).
-**`confidence`** = 0..1, honest. Low confidence with a `question:` is far more
+**`urgency`** = action priority (`info`/`normal`/`urgent`/`blocking`), independent
+of risk. Emit it as a body field, e.g. `urgency: urgent`, before `why:` so older
+v1 readers preserve it. Several notes can cover the same line for different reasons.
+
+**`confidence`** = 0..1, an author estimate, not measured accuracy. Low confidence with a `question:` is far more
 useful to a reviewer than false certainty.
 
 ### `why`
@@ -159,6 +164,20 @@ status you widened on a hunch, is worth its own single-line note — that is the
 line someone will reject, and a note spanning twenty lines gives them nothing to
 act on. When one line carries two changes and only one of them is defensible,
 say which part is which: that is a decision the reviewer can make in one click.
+
+## Execution and quality evidence
+
+`verify --write` saves command results and source fingerprints in `evidence`
+frontmatter, with output logs under `.artifacts/whymark/`. Record conflicts and
+unavailable checks honestly. A matching hash establishes identity, not authenticity;
+passing tests and lint do not prove correctness. Inspect embedded commands before
+explicitly rerunning a review; viewing/importing must never execute them.
+
+Optional deterministic checks: `npx whymark quality init` creates local configuration.
+Read its commands before `npx whymark quality reviews/<slug>.whymark --run --write`.
+This first adapter supports ESLint JSON and existing check commands, with no AI.
+Missing tools and failed baselines remain unavailable. Do not change repository
+quality policy or suppress findings without a concrete reason and expiry.
 
 ## Anti-patterns
 

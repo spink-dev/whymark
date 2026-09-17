@@ -1,3 +1,5 @@
+import { readEvidence, type ExecutionEvidence } from "./evidence";
+import { gitHead, reviewFingerprint, sourceFingerprint, writeOutput } from "./evidence-node";
 import { spawnSync } from "node:child_process";
 import { allNotes, type Check, type WhymarkDocument, type Note, type VerifyClaim } from "./types";
 
@@ -10,6 +12,7 @@ export interface RunResult {
   durationMs: number;
   output: string;
   timedOut: boolean;
+  unavailable: boolean;
 }
 
 export interface ClaimResult {
@@ -25,6 +28,8 @@ export interface ClaimResult {
 
 export interface VerifyOptions {
   cwd?: string;
+  recordEvidence?: boolean;
+  toolVersion?: string;
   timeoutMs?: number;
   /** Only run commands matching this pattern. */
   filter?: RegExp;
@@ -49,6 +54,7 @@ export function runCommand(cmd: string, options: VerifyOptions = {}): RunResult 
     status: result.status === 0 ? "pass" : "fail",
     durationMs: Date.now() - started,
     output,
+    unavailable: Boolean(result.error || result.status === null || result.status === 127),
     timedOut: Boolean(result.error && /ETIMEDOUT|timed out/i.test(String(result.error))),
   };
 }
@@ -59,6 +65,9 @@ export function verifyDocument(
   options: VerifyOptions = {},
 ): ClaimResult[] {
   const results: ClaimResult[] = [];
+  const cwd = options.cwd ?? process.cwd();
+  const before = options.recordEvidence ? sourceFingerprint(cwd) : null;
+  const recordedHead = options.recordEvidence ? gitHead(cwd) : null;
   const cache = new Map<string, RunResult>();
 
   const run = (cmd: string): RunResult => {
@@ -78,7 +87,7 @@ export function verifyDocument(
       file: null,
       claimed: check.status,
       cmd: check.cmd,
-      outcome: outcomeFor(check.status, result.status),
+      outcome: result.unavailable ? "unrunnable" : outcomeFor(check.status, result.status),
       run: result,
     };
     applyToCheck(check, result);
@@ -112,7 +121,7 @@ export function verifyDocument(
         file: note.file,
         claimed: claim.status,
         cmd,
-        outcome: outcomeFor(claim.status, result.status),
+        outcome: result.unavailable ? "unrunnable" : outcomeFor(claim.status, result.status),
         run: result,
       };
       applyToClaim(claim, result);
@@ -121,6 +130,22 @@ export function verifyDocument(
     }
   }
 
+  if (options.recordEvidence) {
+    const after = sourceFingerprint(cwd);
+    const previous = readEvidence(doc.meta.extra.evidence);
+    const additions: ExecutionEvidence[] = results.filter(result => result.run).map(result => {
+      const run = result.run!;
+      return {
+        version: 1, command: result.cmd, noteId: result.noteId, file: result.file,
+        claimed: result.claimed, status: run.unavailable ? "unavailable" : run.status,
+        ran: new Date().toISOString(), durationMs: run.durationMs, exitCode: run.exitCode,
+        cwd: ".", tool: `whymark@${options.toolVersion ?? "development"}`, runtime: process.version,
+        source: before, sourceAfter: after, head: recordedHead, base: doc.meta.base ?? null,
+        reviewHash: reviewFingerprint(doc), ...writeOutput(cwd, run.output), summary: summarise(run),
+      };
+    });
+    doc.meta.extra.evidence = [...previous.filter(old => !additions.some(next => next.command === old.command && next.noteId === old.noteId && next.file === old.file)), ...additions];
+  }
   return results;
 }
 
