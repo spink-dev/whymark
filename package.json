@@ -1,6 +1,6 @@
 {
   "name": "whymark",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "whymark \u2014 a file format and reviewer for reading AI-written code changes with the reasoning, sources, and verification attached to each line.",
   "author": "Samuel Spink",
   "license": "MIT",
