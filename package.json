@@ -14,7 +14,9 @@
     "spec/whymark-v1.md",
     "README.md",
     "LICENSE",
-    ".agents/skills/whymark/SKILL.md"
+    ".agents/skills/whymark/SKILL.md",
+    "dist/whymark-vscode.vsix",
+    "dist/vscode-extension.json"
   ],
   "engines": {
     "node": "22.x"
@@ -42,11 +44,16 @@
     "start": "next start --port 43917",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "npm run build:cli && vitest run",
+    "test": "npm run build:cli && npm run package:vscode && vitest run",
     "test:watch": "vitest",
     "test:ui": "node tests/e2e/viewer.mjs",
     "whymark": "tsx src/cli/whymark.ts",
-    "prepack": "npm run build:cli"
+    "prepack": "npm run build:cli && npm run package:vscode",
+    "build:vscode": "node extensions/vscode/scripts/build.mjs",
+    "package:vscode": "node extensions/vscode/scripts/package.mjs",
+    "test:vscode": "npm run build:vscode && node extensions/vscode/scripts/test.mjs",
+    "test:vscode:ui": "npm run build:vscode && node tests/e2e/vscode.mjs",
+    "publish:vscode": "vsce publish --packagePath .artifacts/whymark-vscode.vsix"
   },
   "dependencies": {
     "yaml": "^2.8.1"
@@ -60,7 +67,10 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/vscode": "^1.96.0",
     "@vercel/analytics": "^2.0.1",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^4.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cn": "^0.3.0",
@@ -70,6 +80,7 @@
     "lucide-react": "^0.545.0",
     "next": "16.3.5",
     "playwright": "^1.63.0",
+    "postcss": "^8.5.28",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "shadcn": "^4.21.0",

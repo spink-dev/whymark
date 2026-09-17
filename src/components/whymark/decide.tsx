@@ -278,11 +278,13 @@ export interface ApplySummary {
  * out of sight, and the reviewer never learns there is anything to apply.
  */
 export function ApplyControls({
+  target = "Working tree",
   summary,
   busy,
   onApply,
   onReset,
 }: {
+  target?: string;
   summary: ApplySummary;
   busy: boolean;
   onApply: () => void;
@@ -299,7 +301,7 @@ export function ApplyControls({
         backgroundColor: "color-mix(in oklch, var(--whymark-del) 8%, transparent)",
       }}
     >
-      <span className="hidden text-[11.5px] lg:inline" title="writes to your working tree">
+      <span className="hidden text-[11.5px] lg:inline" title={`updates ${target.toLowerCase()}`}>
         {describe(summary)}
       </span>
       <span className="text-[11.5px] lg:hidden">{pending} to undo</span>
@@ -315,7 +317,7 @@ export function ApplyControls({
         disabled={busy}
         onClick={onApply}
         className="flex items-center gap-1.5 rounded bg-foreground px-2 py-0.5 text-[11.5px] font-medium text-background transition-opacity disabled:opacity-50"
-        title="Write these decisions to the files in your working tree"
+        title={`Apply these decisions to ${target.toLowerCase()}`}
       >
         {busy ? <Loader2 className="size-3 animate-spin" /> : null}
         apply

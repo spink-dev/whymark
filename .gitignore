@@ -45,3 +45,7 @@ next-env.d.ts
 
 # downloadable snapshots of this repo, served by the dev server
 /public/*.zip
+
+# npm-bundled extension artifacts (rebuilt by prepack)
+/dist/whymark-vscode.vsix
+/dist/vscode-extension.json

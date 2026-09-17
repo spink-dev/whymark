@@ -1,0 +1,14 @@
+import { createVSIX } from '@vscode/vsce';
+import { createHash } from 'node:crypto';
+import { copyFile, readFile, writeFile, mkdir } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+await mkdir(resolve(root, '.artifacts'), { recursive: true });
+await mkdir(resolve(root, 'dist'), { recursive: true });
+const target = resolve(root, '.artifacts/whymark-vscode.vsix');
+await createVSIX({ cwd: resolve(root, 'extensions/vscode'), packagePath: target, dependencies: false });
+await copyFile(target, resolve(root, 'dist/whymark-vscode.vsix'));
+const manifest = JSON.parse(await readFile(resolve(root, 'extensions/vscode/package.json'), 'utf8'));
+const sha256 = createHash('sha256').update(await readFile(target)).digest('hex');
+await writeFile(resolve(root, 'dist/vscode-extension.json'), JSON.stringify({ id: `${manifest.publisher}.${manifest.name}`, version: manifest.version, sha256 }, null, 2) + '\n');

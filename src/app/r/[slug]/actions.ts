@@ -14,15 +14,7 @@ import {
 import { canWriteWorkingTree } from "@/lib/site";
 import type { FileSection } from "@/lib/whymark/types";
 
-export interface EditResult {
-  ok: boolean;
-  /** Present on success: the file's hash after writing, so the client can re-check. */
-  newSha?: string;
-  discarded?: number;
-  restored?: number;
-  partsReverted?: number;
-  error?: string;
-}
+import type { EditResult } from "@/lib/review-actions";
 
 /**
  * These actions write to the working tree of whoever is running the dev server,

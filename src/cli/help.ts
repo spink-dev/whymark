@@ -7,6 +7,16 @@ export type Palette = {
 };
 
 const TOPICS: Record<string, { aliases: string[]; render: (c: Palette) => string }> = {
+  vscode: { aliases: [], render: () => `npx whymark vscode install [--code <path>] [--dry-run] [--marketplace]
+
+Installs the VSIX bundled with this npm package using the VS Code CLI.
+No GitHub access or web server is needed. Install VS Code first.
+--code <path> selects a VS Code launcher when it is not on PATH.
+--dry-run prints the exact command and arguments without changing VS Code.
+--marketplace installs the published extension ID instead (requires publication).
+--extensions-dir <path> and --user-data-dir <path> select isolated VS Code locations.
+No postinstall hook runs, and existing extensions are not force-downgraded.
+` },
   quality: { aliases: [], render: () => `npx whymark quality init
 npx whymark quality <review.whymark> --run [--write] [--baseline report.quality.json]
 npx whymark quality <review.whymark> --run --watch --write
@@ -82,6 +92,7 @@ ${c.bold("WORKFLOW")}
   5.  open https://whymark.x47.dev     drop the file; it stays in the browser
 
 ${c.bold("COMMANDS")}
+  vscode       install the VS Code extension bundled with npm
   quality      configured local checks and ESLint findings
   skill        install the bundled agent skill from npm
   new          skeleton from a git diff                 ${c.gray("alias: init")}

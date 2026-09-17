@@ -1,0 +1,41 @@
+{
+  "name": "whymark",
+  "displayName": "Whymark — Interactive Code Review",
+  "description": "Review staged, unstaged and branch changes with line-linked reasoning and evidence, directly in VS Code.",
+  "version": "0.1.0",
+  "publisher": "spink-dev",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/spink-dev/whymark" },
+  "engines": { "vscode": "^1.96.0" },
+  "categories": ["Other"],
+  "main": "./dist/extension.cjs",
+  "extensionKind": ["workspace"],
+  "capabilities": {
+    "untrustedWorkspaces": { "supported": "limited", "description": "Reviews can be read; Git comparisons and file edits require workspace trust." },
+    "virtualWorkspaces": { "supported": false, "description": "Git comparisons require a local or remote filesystem checkout." }
+  },
+  "contributes": {
+    "customEditors": [{ "viewType": "whymark.review", "displayName": "Whymark Review", "selector": [{ "filenamePattern": "*.whymark" }], "priority": "default" }],
+    "languages": [{ "id": "whymark", "aliases": ["Whymark"], "extensions": [".whymark"] }],
+    "commands": [
+      { "command": "whymark.open", "title": "Whymark: Open Review" },
+      { "command": "whymark.staged", "title": "Whymark: Review Staged Changes (HEAD → Index)" },
+      { "command": "whymark.unstaged", "title": "Whymark: Review Unstaged Changes (Index → Working Tree)" },
+      { "command": "whymark.worktree", "title": "Whymark: Review All Working Changes (HEAD → Working Tree)" },
+      { "command": "whymark.branch", "title": "Whymark: Review Branch Changes (Merge Base → HEAD)" },
+      { "command": "whymark.commit", "title": "Whymark: Review Commit" }
+    ],
+    "menus": {
+      "explorer/context": [{ "command": "whymark.open", "when": "resourceExtname == .whymark", "group": "navigation" }],
+      "scm/title": [
+        { "command": "whymark.staged", "when": "scmProvider == git", "group": "whymark" },
+        { "command": "whymark.unstaged", "when": "scmProvider == git", "group": "whymark" },
+        { "command": "whymark.worktree", "when": "scmProvider == git", "group": "whymark" }
+      ]
+    },
+    "configuration": { "title": "Whymark", "properties": {
+      "whymark.includeUntracked": { "type": "boolean", "default": true, "description": "Include untracked files in unstaged and working-tree comparisons." }
+    } }
+  },
+  "scripts": { "vscode:prepublish": "node scripts/build.mjs" }
+}

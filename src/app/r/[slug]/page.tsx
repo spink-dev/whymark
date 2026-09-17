@@ -5,7 +5,7 @@ import { validateDocumentInRepo } from "@/lib/whymark/validate-tree";
 import { isActionable } from "@/lib/whymark/edit";
 import { hashObject } from "@/lib/whymark/git";
 import { buildReviewVM } from "@/lib/view-model";
-import { ReviewView } from "@/components/whymark/review-view";
+import { WebReviewView } from "@/components/whymark/web-review-view";
 import { canWriteWorkingTree } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -48,5 +48,5 @@ export default async function ReviewPage({ params }: PageProps<"/r/[slug]">) {
     ),
   ]);
 
-  return <ReviewView review={vm} slug={review.slug} issues={validation.diagnostics} />;
+  return <WebReviewView review={vm} slug={review.slug} issues={validation.diagnostics} />;
 }

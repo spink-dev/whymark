@@ -1,0 +1,16 @@
+:root, .dark {
+  --background: var(--vscode-editor-background, #181a20);
+  --foreground: var(--vscode-editor-foreground, #eee);
+  --card: var(--vscode-sideBar-background, #202228);
+  --card-foreground: var(--foreground);
+  --popover: var(--vscode-editorWidget-background, #24262b);
+  --popover-foreground: var(--foreground);
+  --muted-foreground: var(--vscode-descriptionForeground, #aaa);
+  --border: var(--vscode-panel-border, #444);
+  --font-sans: var(--vscode-font-family, sans-serif);
+  --font-geist-mono: var(--vscode-editor-font-family, monospace);
+}
+body { padding: 0; }
+.extension-toolbar { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.extension-toolbar button, .extension-toolbar select { border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; background: var(--card); color: var(--foreground); }
+.extension-notice { padding: 8px 16px; font-size: 12px; color: var(--muted-foreground); }

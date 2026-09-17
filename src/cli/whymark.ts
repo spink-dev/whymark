@@ -11,6 +11,7 @@ import { validateDocumentInRepo } from "../lib/whymark/validate-tree";
 import { summariseResults, verifyDocument, type ClaimResult } from "../lib/whymark/verify";
 import type { Scope } from "../lib/whymark/types";
 import { qualityCommand } from "./quality";
+import { installExtension } from "../lib/vscode/install";
 import { installSkill } from "../lib/skill/install";
 import { renderHelp } from "./help";
 
@@ -118,6 +119,13 @@ function main() {
     return cmdHelp(isHelpToken(args.command) ? args.positionals[0] : args.command);
   }
   switch (args.command) {
+    case "vscode": {
+      if (args.positionals.length !== 1 || args.positionals[0] !== "install") fail("Usage: npx whymark vscode install [--code <path>] [--dry-run] [--marketplace]");
+      for (const name of ["code", "extensions-dir", "user-data-dir"]) if (args.has(name) && !args.str(name)) fail(`--${name} requires a value.`);
+      try { installExtension({ packageRoot: packageRoot(), code: args.str("code"), dryRun: args.has("dry-run"), marketplace: args.has("marketplace"), extensionsDir: args.str("extensions-dir"), userDataDir: args.str("user-data-dir") }); }
+      catch (error) { fail((error as Error).message); }
+      return;
+    }
     case "quality":
       return qualityCommand(args.positionals, { run: args.has("run"), watch: args.has("watch"), write: args.has("write"), config: args.str("config"), baseline: args.str("baseline"), importPath: args.str("import"), toolVersion: args.str("tool-version") }).catch(error => fail((error as Error).message));
     case "skill": {

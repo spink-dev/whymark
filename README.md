@@ -351,3 +351,34 @@ accuracy. Fingerprints exclude ignored files, `.artifacts/`, and review outputs 
 bytes or external services. Inspect output logs before sharing. No command runs just
 by opening a review. Optional Knip, Semgrep, audit and coverage adapters remain future
 integrations; the current quality adapter is ESLint plus configured pass/fail checks.
+
+## VS Code extension
+
+Open `.whymark` reviews interactively in VS Code, or compare staged, unstaged, all
+working-tree, branch and commit changes from the Command Palette. No dev server is
+required. Review comments, filter evidence, switch split/unified views, and apply
+undoable edits to source buffers without changing the Git index.
+
+```sh
+npm run package:vscode
+code --install-extension .artifacts/whymark-vscode.vsix
+```
+
+See [extension usage and safety boundaries](extensions/vscode/README.md). The VSIX
+is local and self-contained; it has not been published to the Marketplace.
+
+### Install the VS Code extension through npm
+
+The next npm release includes its VSIX, so users with VS Code installed can run:
+
+```sh
+npx whymark@latest vscode install
+```
+
+Use `--dry-run` to preview, or `--code /path/to/code` if the editor launcher is not
+on PATH. No GitHub access or Marketplace download is needed for this route.
+After Marketplace publication, `npx whymark vscode install --marketplace` installs
+`spink-dev.whymark` from the Marketplace instead. See the
+[release guide](extensions/vscode/PUBLISHING.md) for publisher setup and separate
+npm/Marketplace releases. These commands are implemented locally; neither updated
+package has been published by this task.

@@ -1,0 +1,1173 @@
+---
+whymark: 1
+title: Install the VS Code extension from the npm package
+author: GPT-6 (Codex)
+date: 2026-09-17T09:59:43.777Z
+scope: unstaged
+base: index
+head: working-tree
+repo: spinkdev/whymark
+summary: The npm package bundles its tested VSIX and provides an explicit VS
+  Code installation command without GitHub or Marketplace access. Optional
+  Marketplace installation uses the same extension identity after publication.
+  Packaging is part of prepack; publishing remains an explicit separate action
+  requiring publisher access. Offline npm-to-editor installation was checked
+  in an isolated VS Code profile; no release or normal-profile installation
+  occurred.
+checks:
+  - cmd: npm test
+    status: pass
+    detail: exit 0 in 5.9s
+    ran: 2026-09-17T10:58:49.651Z
+  - cmd: npm run typecheck
+    status: pass
+    detail: exit 0 in 1.1s
+    ran: 2026-09-17T10:58:50.797Z
+  - cmd: npm run lint
+    status: pass
+    detail: exit 0 in 3.2s
+    ran: 2026-09-17T10:58:54.000Z
+evidence:
+  - version: 1
+    command: npm test
+    noteId: null
+    file: null
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.038Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm run typecheck
+    noteId: null
+    file: null
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.039Z
+    durationMs: 1145
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: 4c790a1d26481d92f95c3d3ac6896b13e103b378ae67a82aa4172b5d0eae9b02
+    outputArtifact: .artifacts/whymark/4c790a1d26481d92f95c3d3ac6896b13e103b378ae67a82aa4172b5d0eae9b02.log
+    summary: exit 0 in 1.1s
+  - version: 1
+    command: npm run lint
+    noteId: null
+    file: null
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.041Z
+    durationMs: 3203
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: 12a7d4451b2edec6f0c59ab46c9523bfbefc2994173ad529ae49df3148c244e1
+    outputArtifact: .artifacts/whymark/12a7d4451b2edec6f0c59ab46c9523bfbefc2994173ad529ae49df3148c244e1.log
+    summary: exit 0 in 3.2s
+  - version: 1
+    command: npm test
+    noteId: n1
+    file: .gitignore
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.041Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n2
+    file: README.md
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.042Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n3
+    file: dist/whymark.mjs
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.042Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n4
+    file: extensions/vscode/README.md
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.042Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n5
+    file: package.json
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.043Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n6
+    file: specs/002-vscode-extension/PLAN.md
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.043Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n7
+    file: specs/002-vscode-extension/verification.md
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.044Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n8
+    file: src/cli/help.ts
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.044Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n9
+    file: src/cli/whymark.ts
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.044Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n10
+    file: tests/package.test.ts
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.045Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n11
+    file: extensions/vscode/PUBLISHING.md
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.045Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n12
+    file: extensions/vscode/scripts/package.mjs
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.045Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n13
+    file: src/lib/vscode/install.ts
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.046Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+  - version: 1
+    command: npm test
+    noteId: n14
+    file: tests/vscode-install.test.ts
+    claimed: unknown
+    status: pass
+    ran: 2026-09-17T10:58:54.047Z
+    durationMs: 5902
+    exitCode: 0
+    cwd: .
+    tool: whymark@0.3.0
+    runtime: v22.23.2
+    source: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    sourceAfter: 92c0ad9372c6745f28518c2e64c09efae9bc8d232704fe0235a0bc1424ddb2b9
+    head: d5ba7ce4cbba62197a125e3fabd8ae47dde2a2ff
+    base: index
+    reviewHash: 8c1dd2181fa0bab85127d431ec32809b06d4b28ec54f0b5f545d597a1d4f2d02
+    outputHash: e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc
+    outputArtifact: .artifacts/whymark/e0baa3faf3d216eb1bca88177b9ac54a6e83c7e331b65421bc3657883428ebfc.log
+    summary: exit 0 in 5.9s
+---
+
+@file .gitignore modified +4 oldsha=d84268c newsha=b55c8b6
+@@ -45,3 +45,7 @@ next-env.d.ts
+ 
+ # downloadable snapshots of this repo, served by the dev server
+ /public/*.zip
++
++# npm-bundled extension artifacts (rebuilt by prepack)
++/dist/whymark-vscode.vsix
++/dist/vscode-extension.json
+
+@note file kind=intent
+why: Build and allowlist the extension artifact during npm packing so the
+  package works outside this checkout. Keep generated bytes out of source
+  control and make publishing an explicit operation on the reviewed VSIX.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file README.md modified +16 oldsha=3669078 newsha=ef9fcb5
+@@ -366,3 +366,19 @@ code --install-extension .artifacts/whymark-vscode.vsix
+ 
+ See [extension usage and safety boundaries](extensions/vscode/README.md). The VSIX
+ is local and self-contained; it has not been published to the Marketplace.
++
++### Install the VS Code extension through npm
++
++The next npm release includes its VSIX, so users with VS Code installed can run:
++
++```sh
++npx whymark@latest vscode install
++```
++
++Use `--dry-run` to preview, or `--code /path/to/code` if the editor launcher is not
++on PATH. No GitHub access or Marketplace download is needed for this route.
++After Marketplace publication, `npx whymark vscode install --marketplace` installs
++`spink-dev.whymark` from the Marketplace instead. See the
++[release guide](extensions/vscode/PUBLISHING.md) for publisher setup and separate
++npm/Marketplace releases. These commands are implemented locally; neither updated
++package has been published by this task.
+
+@note file kind=intent
+why: Distinguish the working npm installation path from a Marketplace listing
+  that still needs publisher access and publication. Document authentication
+  and release boundaries without claiming an unpublished extension is
+  available.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file dist/whymark.mjs modified +118 -42 oldsha=b855efb newsha=c5d6e75
+@@ -2,8 +2,8 @@
+ /* generated by npm run build:cli — do not edit */
+ 
+ // src/cli/whymark.ts
+-import { existsSync as existsSync3, mkdirSync as mkdirSync3, readFileSync as readFileSync6, writeFileSync as writeFileSync4 } from "node:fs";
+-import { dirname as dirname2, join as join5, relative as relative6, resolve as resolve6 } from "node:path";
++import { existsSync as existsSync4, mkdirSync as mkdirSync3, readFileSync as readFileSync7, writeFileSync as writeFileSync4 } from "node:fs";
++import { dirname as dirname3, join as join6, relative as relative6, resolve as resolve7 } from "node:path";
+ import { fileURLToPath } from "node:url";
+ 
+ // src/lib/whymark/parse.ts
+@@ -852,29 +852,29 @@ function appendToField(ctx, text) {
+   const note = ctx.note;
+   const field = ctx.lastField;
+   if (!field) return;
+-  const join6 = (existing) => existing ? `${existing} ${text}` : text;
+-  if (field.name === "why") note.why = join6(note.why);
+-  else if (field.name === "what") note.what = join6(note.what);
+-  else if (field.name === "impact") note.impact = join6(note.impact);
++  const join7 = (existing) => existing ? `${existing} ${text}` : text;
++  if (field.name === "why") note.why = join7(note.why);
++  else if (field.name === "what") note.what = join7(note.what);
++  else if (field.name === "impact") note.impact = join7(note.impact);
+   else if (field.name === "source") {
+     const ref = note.sources[field.index];
+-    ref.note = join6(ref.note);
++    ref.note = join7(ref.note);
+     ref.raw = `${ref.raw} ${text}`;
+   } else if (field.name === "verify") {
+     const claim = note.verify[field.index];
+-    claim.comment = join6(claim.comment);
++    claim.comment = join7(claim.comment);
+     claim.raw = `${claim.raw} ${text}`;
+   } else if (field.name === "alt") {
+-    note.alternatives[field.index] = join6(note.alternatives[field.index]);
++    note.alternatives[field.index] = join7(note.alternatives[field.index]);
+   } else if (field.name === "todo") {
+-    note.todos[field.index] = join6(note.todos[field.index]);
++    note.todos[field.index] = join7(note.todos[field.index]);
+   } else if (field.name === "question") {
+-    note.questions[field.index] = join6(note.questions[field.index]);
++    note.questions[field.index] = join7(note.questions[field.index]);
+   } else if (field.name === "ref") {
+-    note.refs[field.index] = join6(note.refs[field.index]);
++    note.refs[field.index] = join7(note.refs[field.index]);
+   } else if (field.name.startsWith("extra:")) {
+     const key = field.name.slice("extra:".length);
+-    note.extra[key][field.index] = join6(note.extra[key][field.index]);
++    note.extra[key][field.index] = join7(note.extra[key][field.index]);
+   }
+ }
+ function finishNote(ctx, diagnostics) {
+@@ -2466,39 +2466,94 @@ async function qualityCommand(positionals, options) {
+   });
+ }
+ 
+-// src/lib/skill/install.ts
+-import { existsSync as existsSync2, lstatSync as lstatSync2, mkdirSync as mkdirSync2, readFileSync as readFileSync5, realpathSync as realpathSync4, writeFileSync as writeFileSync3 } from "node:fs";
+-import { dirname, join as join4, relative as relative5, resolve as resolve5, sep as sep3 } from "node:path";
++// src/lib/vscode/install.ts
++import { spawnSync as spawnSync3 } from "node:child_process";
++import { accessSync, constants, existsSync as existsSync2, readFileSync as readFileSync5 } from "node:fs";
++import { createHash as createHash2 } from "node:crypto";
++import { delimiter, dirname, isAbsolute, join as join4, resolve as resolve5 } from "node:path";
+ import { homedir } from "node:os";
++function executable(candidate) {
++  try {
++    accessSync(candidate, process.platform === "win32" ? constants.F_OK : constants.X_OK);
++    return true;
++  } catch {
++    return false;
++  }
++}
++function codeLauncher(explicit) {
++  const names = explicit ? [explicit] : process.platform === "win32" ? ["code.cmd", "code.exe"] : ["code"];
++  const candidates = names.flatMap((name) => isAbsolute(name) || /[\\/]/.test(name) ? [resolve5(name)] : (process.env.PATH ?? "").split(delimiter).filter(Boolean).map((dir) => join4(dir, name)));
++  if (!explicit && process.platform === "darwin") candidates.push("/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code", join4(homedir(), "Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"));
++  if (!explicit && process.platform === "win32") {
++    for (const root of [process.env.LOCALAPPDATA && join4(process.env.LOCALAPPDATA, "Programs"), process.env.ProgramFiles]) if (root) candidates.push(join4(root, "Microsoft VS Code", "Code.exe"));
++  }
++  const command = candidates.find(executable);
++  if (!command) throw new Error("VS Code CLI not found. Install VS Code and add 'code' to PATH, or pass --code <path-to-code>.");
++  if (process.platform === "win32") {
++    const root = /\.(cmd|bat)$/i.test(command) ? resolve5(dirname(command), "..") : dirname(command);
++    const native = join4(root, "Code.exe");
++    const cli = join4(root, "resources/app/out/cli.js");
++    if (!existsSync2(native) || !existsSync2(cli)) throw new Error("Use --code with the standard VS Code Code.exe or bin/code.cmd installation path.");
++    return { command: native, args: [cli], env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" } };
++  }
++  return { command, args: [], env: process.env };
++}
++function installExtension(options) {
++  const metadataPath = join4(options.packageRoot, "dist/vscode-extension.json");
++  if (!existsSync2(metadataPath)) throw new Error("Extension bundle missing. In a source checkout run npm run package:vscode; otherwise reinstall the whymark npm package.");
++  const metadata = JSON.parse(readFileSync5(metadataPath, "utf8"));
++  if (!/^[a-z0-9-]+\.[a-z0-9-]+$/i.test(metadata.id) || !/^[a-f0-9]{64}$/.test(metadata.sha256)) throw new Error("Invalid bundled extension metadata. Reinstall the whymark npm package.");
++  const vsix = join4(options.packageRoot, "dist/whymark-vscode.vsix");
++  if (!options.marketplace && createHash2("sha256").update(readFileSync5(vsix)).digest("hex") !== metadata.sha256) throw new Error("Bundled VSIX checksum mismatch. Reinstall the whymark npm package.");
++  const launcher = codeLauncher(options.code);
++  const args = [...launcher.args, "--install-extension", options.marketplace ? metadata.id : vsix];
++  if (options.extensionsDir) args.push("--extensions-dir", resolve5(options.extensionsDir));
++  if (options.userDataDir) args.push("--user-data-dir", resolve5(options.userDataDir));
++  if (options.dryRun) {
++    process.stdout.write(`${JSON.stringify({ command: launcher.command, args, source: options.marketplace ? "marketplace" : "bundled", extension: metadata.id, bundledVersion: metadata.version }, null, 2)}
++`);
++    return;
++  }
++  const result = spawnSync3(launcher.command, args, { stdio: "inherit", env: launcher.env, shell: false, timeout: 12e4 });
++  if (result.error) throw new Error(`VS Code installation could not complete: ${result.error.message}`);
++  if (result.status !== 0) throw new Error(`VS Code installation failed (${result.signal ?? result.status}).${options.marketplace ? " The extension must be published before Marketplace installation works." : ""}`);
++  process.stdout.write(`Installed ${metadata.id}. Open the Command Palette and search for Whymark.
++`);
++}
++
++// src/lib/skill/install.ts
++import { existsSync as existsSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync2, readFileSync as readFileSync6, realpathSync as realpathSync4, writeFileSync as writeFileSync3 } from "node:fs";
++import { dirname as dirname2, join as join5, relative as relative5, resolve as resolve6, sep as sep3 } from "node:path";
++import { homedir as homedir2 } from "node:os";
+ function installSkill(options) {
+   const agents = [...new Set(options.agents?.length ? options.agents : ["codex"])];
+   if (agents.some((agent) => !["codex", "claude-code"].includes(agent))) {
+     throw new Error("Supported agents: codex, claude-code.");
+   }
+-  const base = realpathSync4(options.global ? options.home ?? homedir() : options.cwd);
+-  const skill = readFileSync5(join4(options.packageRoot, ".agents/skills/whymark/SKILL.md"), "utf8").replaceAll("spec/whymark-v1.md", "references/whymark-v1.md");
++  const base = realpathSync4(options.global ? options.home ?? homedir2() : options.cwd);
++  const skill = readFileSync6(join5(options.packageRoot, ".agents/skills/whymark/SKILL.md"), "utf8").replaceAll("spec/whymark-v1.md", "references/whymark-v1.md");
+   const assets = [
+     ["SKILL.md", skill],
+-    ["references/whymark-v1.md", readFileSync5(join4(options.packageRoot, "spec/whymark-v1.md"), "utf8")]
++    ["references/whymark-v1.md", readFileSync6(join5(options.packageRoot, "spec/whymark-v1.md"), "utf8")]
+   ];
+   const pending = [];
+   for (const agent of agents) {
+-    const destination = join4(base, agent === "codex" ? ".agents" : ".claude", "skills/whymark");
++    const destination = join5(base, agent === "codex" ? ".agents" : ".claude", "skills/whymark");
+     for (const [name, content] of assets) {
+-      const path = resolve5(destination, name);
++      const path = resolve6(destination, name);
+       assertNoSymlinks(base, path);
+-      const identical = existsSync2(path) && readFileSync5(path, "utf8") === content;
+-      if (!identical && existsSync2(path) && !options.force) {
++      const identical = existsSync3(path) && readFileSync6(path, "utf8") === content;
++      if (!identical && existsSync3(path) && !options.force) {
+         throw new Error(`Refusing to overwrite ${path}. Use --force to replace this skill explicitly.`);
+       }
+-      pending.push({ path, content, action: identical ? "unchanged" : existsSync2(path) ? "replace" : "create" });
++      pending.push({ path, content, action: identical ? "unchanged" : existsSync3(path) ? "replace" : "create" });
+     }
+   }
+   if (!options.dryRun) {
+     for (const file of pending) {
+       if (file.action === "unchanged") continue;
+       assertNoSymlinks(base, file.path);
+-      mkdirSync2(dirname(file.path), { recursive: true });
++      mkdirSync2(dirname2(file.path), { recursive: true });
+       writeFileSync3(file.path, file.content, { flag: file.action === "create" ? "wx" : "w" });
+     }
+   }
+@@ -2509,7 +2564,7 @@ function assertNoSymlinks(base, path) {
+   if (parts.includes("..")) throw new Error("Skill destination escapes its installation directory.");
+   let current = base;
+   for (const [index, part] of parts.entries()) {
+-    current = join4(current, part);
++    current = join5(current, part);
+     let info;
+     try {
+       info = lstatSync2(current);
+@@ -2526,6 +2581,16 @@ function assertNoSymlinks(base, path) {
+ 
+ // src/cli/help.ts
+ var TOPICS = {
++  vscode: { aliases: [], render: () => `npx whymark vscode install [--code <path>] [--dry-run] [--marketplace]
++
++Installs the VSIX bundled with this npm package using the VS Code CLI.
++No GitHub access or web server is needed. Install VS Code first.
++--code <path> selects a VS Code launcher when it is not on PATH.
++--dry-run prints the exact command and arguments without changing VS Code.
++--marketplace installs the published extension ID instead (requires publication).
++--extensions-dir <path> and --user-data-dir <path> select isolated VS Code locations.
++No postinstall hook runs, and existing extensions are not force-downgraded.
++` },
+   quality: { aliases: [], render: () => `npx whymark quality init
+ npx whymark quality <review.whymark> --run [--write] [--baseline report.quality.json]
+ npx whymark quality <review.whymark> --run --watch --write
+@@ -2595,6 +2660,7 @@ ${c2.bold("WORKFLOW")}
+   5.  open https://whymark.x47.dev     drop the file; it stays in the browser
+ 
+ ${c2.bold("COMMANDS")}
++  vscode       install the VS Code extension bundled with npm
+   quality      configured local checks and ESLint findings
+   skill        install the bundled agent skill from npm
+   new          skeleton from a git diff                 ${c2.gray("alias: init")}
+@@ -2965,6 +3031,16 @@ function main() {
+     return cmdHelp(isHelpToken(args.command) ? args.positionals[0] : args.command);
+   }
+   switch (args.command) {
++    case "vscode": {
++      if (args.positionals.length !== 1 || args.positionals[0] !== "install") fail("Usage: npx whymark vscode install [--code <path>] [--dry-run] [--marketplace]");
++      for (const name of ["code", "extensions-dir", "user-data-dir"]) if (args.has(name) && !args.str(name)) fail(`--${name} requires a value.`);
++      try {
++        installExtension({ packageRoot: packageRoot(), code: args.str("code"), dryRun: args.has("dry-run"), marketplace: args.has("marketplace"), extensionsDir: args.str("extensions-dir"), userDataDir: args.str("user-data-dir") });
++      } catch (error) {
++        fail(error.message);
++      }
++      return;
++    }
+     case "quality":
+       return qualityCommand(args.positionals, { run: args.has("run"), watch: args.has("watch"), write: args.has("write"), config: args.str("config"), baseline: args.str("baseline"), importPath: args.str("import"), toolVersion: args.str("tool-version") }).catch((error) => fail(error.message));
+     case "skill": {
+@@ -3065,8 +3141,8 @@ function cmdNew(args) {
+     process.stdout.write(text);
+     return;
+   }
+-  const target = out ? resolve6(cwd, out) : resolve6(cwd, "reviews", `${slug(doc.meta.title)}.whymark`);
+-  mkdirSync3(dirname2(target), { recursive: true });
++  const target = out ? resolve7(cwd, out) : resolve7(cwd, "reviews", `${slug(doc.meta.title)}.whymark`);
++  mkdirSync3(dirname3(target), { recursive: true });
+   writeFileSync4(target, text);
+   const stats = computeStats(doc);
+   const rel = relative6(cwd, target) || target;
+@@ -3099,15 +3175,15 @@ function cmdPrompt(args) {
+   if (!diff.files.length) noChanges(doc.meta.scope);
+   const skeleton = serializeWhymark(doc);
+   const pack = packageRoot();
+-  const templatePath = [join5(cwd, "prompts", "whymark-author.md"), join5(pack, "prompts", "whymark-author.md")].find(
+-    existsSync3
++  const templatePath = [join6(cwd, "prompts", "whymark-author.md"), join6(pack, "prompts", "whymark-author.md")].find(
++    existsSync4
+   );
+-  const template = templatePath ? stripPreamble(readFileSync6(templatePath, "utf8")) : FALLBACK_PROMPT;
+-  const specInRepo = existsSync3(join5(cwd, "spec/whymark-v1.md"));
++  const template = templatePath ? stripPreamble(readFileSync7(templatePath, "utf8")) : FALLBACK_PROMPT;
++  const specInRepo = existsSync4(join6(cwd, "spec/whymark-v1.md"));
+   process.stdout.write(
+     template.replace("{{SKELETON}}", skeleton.trimEnd()).replace(
+       "{{SPEC_PATH}}",
+-      specInRepo ? "spec/whymark-v1.md" : join5(pack, "spec/whymark-v1.md")
++      specInRepo ? "spec/whymark-v1.md" : join6(pack, "spec/whymark-v1.md")
+     )
+   );
+ }
+@@ -3126,8 +3202,8 @@ command you ran. Do not narrate what the code does. Keep the diff bytes untouche
+ \`\`\`
+ `;
+ function loadDoc(path) {
+-  if (!existsSync3(path)) fail(`No such file: ${path}`);
+-  const text = readFileSync6(path, "utf8");
++  if (!existsSync4(path)) fail(`No such file: ${path}`);
++  const text = readFileSync7(path, "utf8");
+   return parseWhymark(text, { filename: path });
+ }
+ function cmdValidate(args) {
+@@ -3314,20 +3390,20 @@ function slug(title) {
+   return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "review";
+ }
+ function packageRoot() {
+-  const here = dirname2(fileURLToPath(import.meta.url));
+-  for (const dir of [join5(here, ".."), join5(here, "../..")]) {
+-    const pkgPath = join5(dir, "package.json");
+-    if (!existsSync3(pkgPath)) continue;
++  const here = dirname3(fileURLToPath(import.meta.url));
++  for (const dir of [join6(here, ".."), join6(here, "../..")]) {
++    const pkgPath = join6(dir, "package.json");
++    if (!existsSync4(pkgPath)) continue;
+     try {
+-      if (JSON.parse(readFileSync6(pkgPath, "utf8")).name === "whymark") return dir;
++      if (JSON.parse(readFileSync7(pkgPath, "utf8")).name === "whymark") return dir;
+     } catch {
+     }
+   }
+-  return join5(here, "../..");
++  return join6(here, "../..");
+ }
+ function pkgVersion() {
+   try {
+-    return JSON.parse(readFileSync6(join5(packageRoot(), "package.json"), "utf8")).version ?? "0.0.0";
++    return JSON.parse(readFileSync7(join6(packageRoot(), "package.json"), "utf8")).version ?? "0.0.0";
+   } catch {
+     return "0.0.0";
+   }
+
+@note file kind=generated
+why: Build and allowlist the extension artifact during npm packing so the
+  package works outside this checkout. Keep generated bytes out of source
+  control and make publishing an explicit operation on the reviewed VSIX.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file extensions/vscode/README.md modified +20 oldsha=a79f494 newsha=4288cac
+@@ -2,6 +2,26 @@
+ 
+ Read AI-written changes with the reasons, sources and verification beside the code — directly in VS Code, without starting a web server.
+ 
++## Install from npm
++
++After the next npm release ships this command:
++
++```sh
++npx whymark@latest vscode install
++```
++
++It installs the extension bundled in the npm package through VS Code's CLI, with
++no GitHub access or Marketplace dependency. VS Code must already be installed.
++Use `--dry-run` to preview or `--code /path/to/code` for a custom installation.
++Installation is explicit; installing the npm package alone does not change VS Code.
++The VSIX version is tied to that npm release. Updates through npm require rerunning
++the command; the installer does not force a downgrade of a newer installed extension.
++
++After Marketplace publication, search for **Whymark** by publisher **spink-dev**,
++or run `npx whymark vscode install --marketplace`. That route installs the published
++Marketplace version instead of the bundled version. Publisher availability and
++publication are not yet confirmed.
++
+ ## Install locally
+ 
+ From the repository root:
+
+@note file kind=intent
+why: Distinguish the working npm installation path from a Marketplace listing
+  that still needs publisher access and publication. Document authentication
+  and release boundaries without claiming an unpublished extension is
+  available.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file package.json modified +10 -7 oldsha=f785870 newsha=30a7b4b
+@@ -1,7 +1,7 @@
+ {
+   "name": "whymark",
+   "version": "0.3.0",
+-  "description": "whymark — a file format and reviewer for reading AI-written code changes with the reasoning, sources, and verification attached to each line.",
++  "description": "whymark \u2014 a file format and reviewer for reading AI-written code changes with the reasoning, sources, and verification attached to each line.",
+   "author": "Samuel Spink",
+   "license": "MIT",
+   "bin": {
+@@ -14,7 +14,9 @@
+     "spec/whymark-v1.md",
+     "README.md",
+     "LICENSE",
+-    ".agents/skills/whymark/SKILL.md"
++    ".agents/skills/whymark/SKILL.md",
++    "dist/whymark-vscode.vsix",
++    "dist/vscode-extension.json"
+   ],
+   "engines": {
+     "node": "22.x"
+@@ -37,20 +39,21 @@
+   "scripts": {
+     "dev": "next dev --port 43917",
+     "build": "next build",
+-    "build:cli": "esbuild src/cli/whymark.ts --bundle --platform=node --format=esm --outfile=dist/whymark.mjs --external:yaml --legal-comments=none --banner:js='/* generated by npm run build:cli — do not edit */'",
++    "build:cli": "esbuild src/cli/whymark.ts --bundle --platform=node --format=esm --outfile=dist/whymark.mjs --external:yaml --legal-comments=none --banner:js='/* generated by npm run build:cli \u2014 do not edit */'",
+     "prepublishOnly": "npm run build:cli",
+     "start": "next start --port 43917",
+     "lint": "eslint",
+     "typecheck": "tsc --noEmit",
+-    "test": "npm run build:cli && vitest run",
++    "test": "npm run build:cli && npm run package:vscode && vitest run",
+     "test:watch": "vitest",
+     "test:ui": "node tests/e2e/viewer.mjs",
+     "whymark": "tsx src/cli/whymark.ts",
+-    "prepack": "npm run build:cli",
++    "prepack": "npm run build:cli && npm run package:vscode",
+     "build:vscode": "node extensions/vscode/scripts/build.mjs",
+-    "package:vscode": "npm run build:vscode && cd extensions/vscode && vsce package --no-dependencies --allow-missing-repository --out ../../.artifacts/whymark-vscode.vsix",
++    "package:vscode": "node extensions/vscode/scripts/package.mjs",
+     "test:vscode": "npm run build:vscode && node extensions/vscode/scripts/test.mjs",
+-    "test:vscode:ui": "npm run build:vscode && node tests/e2e/vscode.mjs"
++    "test:vscode:ui": "npm run build:vscode && node tests/e2e/vscode.mjs",
++    "publish:vscode": "vsce publish --packagePath .artifacts/whymark-vscode.vsix"
+   },
+   "dependencies": {
+     "yaml": "^2.8.1"
+
+@note file kind=intent
+why: Build and allowlist the extension artifact during npm packing so the
+  package works outside this checkout. Keep generated bytes out of source
+  control and make publishing an explicit operation on the reviewed VSIX.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file specs/002-vscode-extension/PLAN.md modified +10 oldsha=7f4927f newsha=74bb15e
+@@ -41,3 +41,13 @@ Review paths and webview messages are untrusted. Gate edits and Git on workspace
+ 
+ ## Open questions
+ None blocking. Initial extension targets desktop/remote filesystem workspaces; compare refresh is explicit and review source changes refresh automatically.
++
++## Distribution follow-up
++
++Bundle the tested VSIX plus identity/version/SHA-256 metadata in the npm tarball.
++Add an explicit `whymark vscode install` command with a preview, launcher override,
++isolated profile paths and optional Marketplace ID installation. Build the VSIX
++in prepack and verify a real offline tarball consumer can install it into a clean
++VS Code profile. Provide an explicit publish command for the already-tested VSIX
++and a publisher/authentication guide. Publication and publisher provisioning are
++outside this implementation request.
+
+@note file kind=intent
+why: Distinguish the working npm installation path from a Marketplace listing
+  that still needs publisher access and publication. Document authentication
+  and release boundaries without claiming an unpublished extension is
+  available.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file specs/002-vscode-extension/verification.md modified +21 oldsha=ba3970f newsha=1ace7ea
+@@ -61,3 +61,24 @@ workspace host, branch/commit input dialogs and Save As dialog interaction were
+ not exercised. API typing uses 1.96; installed-host testing uses 1.138. The save
+ operation behind the dialog is tested with real VS Code APIs. The desktop/remote
+ filesystem extension does not support browser-only virtual workspaces.
++
++## npm / Marketplace distribution follow-up
++
++The npm file allowlist now includes the built VSIX and identity/digest metadata;
++`prepack` rebuilds them. `whymark vscode install` invokes the editor CLI with separate
++arguments and checks the bundled digest before installation. `--dry-run` performs
++no installation; `--marketplace` selects the extension ID for use after publication.
++The explicit `publish:vscode` script publishes an already-built VSIX only when run.
++
++Verification: 106 tests / 15 files, typecheck and lint passed on Node 22. An actual
++npm tarball and local yaml tarball were installed offline into a clean consumer;
++that consumer's CLI installed the bundled VSIX into an isolated VS Code profile,
++and VS Code listed `spink-dev.whymark@0.1.0`. The normal editor profile was unchanged.
++Unit checks cover argument boundaries, paths with spaces/metacharacters, preview,
++missing launchers, nonzero editor exits, Marketplace target selection and corrupt
++bundled bytes. Windows launcher behavior is implemented but not runtime-tested.
++
++The distribution changes were inspected in separate source and behavior passes.
++Existing staged changes from the extension implementation were preserved. Publisher
++ownership, authenticated Marketplace publication and end-user Marketplace download
++are not verified. Neither npm nor Marketplace was published.
+
+@note file kind=intent
+why: Distinguish the working npm installation path from a Marketplace listing
+  that still needs publisher access and publication. Document authentication
+  and release boundaries without claiming an unpublished extension is
+  available.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file src/cli/help.ts modified +11 oldsha=ec0ff08 newsha=8a189f7
+@@ -7,6 +7,16 @@ export type Palette = {
+ };
+ 
+ const TOPICS: Record<string, { aliases: string[]; render: (c: Palette) => string }> = {
++  vscode: { aliases: [], render: () => `npx whymark vscode install [--code <path>] [--dry-run] [--marketplace]
++
++Installs the VSIX bundled with this npm package using the VS Code CLI.
++No GitHub access or web server is needed. Install VS Code first.
++--code <path> selects a VS Code launcher when it is not on PATH.
++--dry-run prints the exact command and arguments without changing VS Code.
++--marketplace installs the published extension ID instead (requires publication).
++--extensions-dir <path> and --user-data-dir <path> select isolated VS Code locations.
++No postinstall hook runs, and existing extensions are not force-downgraded.
++` },
+   quality: { aliases: [], render: () => `npx whymark quality init
+ npx whymark quality <review.whymark> --run [--write] [--baseline report.quality.json]
+ npx whymark quality <review.whymark> --run --watch --write
+@@ -82,6 +92,7 @@ ${c.bold("WORKFLOW")}
+   5.  open https://whymark.x47.dev     drop the file; it stays in the browser
+ 
+ ${c.bold("COMMANDS")}
++  vscode       install the VS Code extension bundled with npm
+   quality      configured local checks and ESLint findings
+   skill        install the bundled agent skill from npm
+   new          skeleton from a git diff                 ${c.gray("alias: init")}
+
+@note file kind=intent
+why: Expose editor installation as a discoverable explicit CLI action; npm
+  installation alone must not modify editor extensions.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file src/cli/whymark.ts modified +8 oldsha=4079220 newsha=af5b60c
+@@ -11,5 +11,6 @@ import { validateDocumentInRepo } from "../lib/whymark/validate-tree";
+ import { summariseResults, verifyDocument, type ClaimResult } from "../lib/whymark/verify";
+ import type { Scope } from "../lib/whymark/types";
+ import { qualityCommand } from "./quality";
++import { installExtension } from "../lib/vscode/install";
+ import { installSkill } from "../lib/skill/install";
+ import { renderHelp } from "./help";
+@@ -118,6 +119,13 @@ function main() {
+     return cmdHelp(isHelpToken(args.command) ? args.positionals[0] : args.command);
+   }
+   switch (args.command) {
++    case "vscode": {
++      if (args.positionals.length !== 1 || args.positionals[0] !== "install") fail("Usage: npx whymark vscode install [--code <path>] [--dry-run] [--marketplace]");
++      for (const name of ["code", "extensions-dir", "user-data-dir"]) if (args.has(name) && !args.str(name)) fail(`--${name} requires a value.`);
++      try { installExtension({ packageRoot: packageRoot(), code: args.str("code"), dryRun: args.has("dry-run"), marketplace: args.has("marketplace"), extensionsDir: args.str("extensions-dir"), userDataDir: args.str("user-data-dir") }); }
++      catch (error) { fail((error as Error).message); }
++      return;
++    }
+     case "quality":
+       return qualityCommand(args.positionals, { run: args.has("run"), watch: args.has("watch"), write: args.has("write"), config: args.str("config"), baseline: args.str("baseline"), importPath: args.str("import"), toolVersion: args.str("tool-version") }).catch(error => fail((error as Error).message));
+     case "skill": {
+
+@note file kind=intent
+why: Expose editor installation as a discoverable explicit CLI action; npm
+  installation alone must not modify editor extensions.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file tests/package.test.ts modified +6 -1 oldsha=015e6f6 newsha=202d66b
+@@ -1,5 +1,5 @@
+ import { spawnSync } from "node:child_process";
+-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
++import { existsSync, realpathSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join, resolve } from "node:path";
+ import { expect, it } from "vitest";
+@@ -14,12 +14,17 @@ it("installs the packed skill with only npm tarballs and no Git access", () => {
+   try {
+     const packed = JSON.parse(run("npm", ["pack", "--ignore-scripts", "--json", "--pack-destination", temp]))[0];
+     expect(packed.files.map((f: { path: string }) => f.path)).toContain(".agents/skills/whymark/SKILL.md");
++    expect(packed.files.map((f: { path: string }) => f.path)).toContain("dist/whymark-vscode.vsix");
++    expect(packed.files.map((f: { path: string }) => f.path)).toContain("dist/vscode-extension.json");
+     const yaml = JSON.parse(run("npm", ["pack", "./node_modules/yaml", "--ignore-scripts", "--json", "--pack-destination", temp]))[0];
+     const consumer = join(temp, "consumer"); mkdirSync(consumer);
+     writeFileSync(join(consumer, "package.json"), '{"private":true}');
+     run("npm", ["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", join(temp, packed.filename), join(temp, yaml.filename)], consumer);
+     const cli = join(consumer, "node_modules/whymark/bin/whymark.mjs");
+     run(process.execPath, [cli, "skill", "install", "--agent", "codex", "--agent", "claude-code"], consumer);
++    const preview = JSON.parse(run(process.execPath, [cli, "vscode", "install", "--dry-run", "--code", process.execPath], consumer));
++    expect(preview.source).toBe("bundled");
++    expect(preview.args[1]).toBe(realpathSync(join(consumer, "node_modules/whymark/dist/whymark-vscode.vsix")));
+     const skill = join(consumer, ".agents/skills/whymark");
+     expect(existsSync(join(skill, "references/whymark-v1.md"))).toBe(true);
+     expect(readFileSync(join(skill, "SKILL.md"), "utf8")).toContain("references/whymark-v1.md");
+
+@note file kind=test
+why: Verify the actual packed contents and installer boundary: missing
+  launchers, failed processes, corrupted VSIX bytes, argument handling and
+  previews must not silently look like successful installation.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file extensions/vscode/PUBLISHING.md added +70 newsha=7df6a75
+@@ -0,0 +1,70 @@
++# Distribution and release
++
++Two independent channels are supported. The npm package carries a VSIX built during
++`prepack`; its explicit `whymark vscode install` command checks the packaged digest
++and invokes the installed VS Code CLI. The digest detects corruption; it is not a
++publisher signature. No postinstall hook installs extensions.
++
++The extension identity is `spink-dev.whymark`, as declared in the extension manifest.
++Ownership/availability of that publisher must be confirmed before publishing. A
++private GitHub repository can remain private: consumers install the npm tarball or
++Marketplace artifact without cloning it. Both public releases expose their packaged
++code and documentation, even when the source repository stays private.
++
++## Build and check locally
++
++Use Node 22 and run from the repository root:
++
++```sh
++npm ci
++npm test
++npm run typecheck
++npm run lint
++npm run package:vscode
++WHYMARK_VSIX=.artifacts/whymark-vscode.vsix npm run test:vscode
++npm pack
++```
++
++`package:vscode` builds the extension and creates the same VSIX in
++`.artifacts/whymark-vscode.vsix` and `dist/whymark-vscode.vsix`. It also writes
++`dist/vscode-extension.json` with identity, version and digest. The npm file allowlist
++includes both dist files; `prepack` regenerates them so fresh checkouts can publish.
++Check the tarball before releasing. Version the npm CLI and extension independently;
++bump `extensions/vscode/package.json` for each Marketplace release, and the root
++package version for npm releases. Do not reuse an already-published version.
++
++## Marketplace setup (one-time)
++
++1. Sign in to the [publisher management page](https://marketplace.visualstudio.com/manage).
++2. Create or obtain access to the publisher ID in the manifest. If `spink-dev` is not
++   yours, change the manifest publisher before rebuilding and testing both artifacts.
++3. Configure publishing authentication. Current VS Code guidance recommends Microsoft
++   Entra ID with workload identity federation for automation. Authorized publishers
++   can also upload the tested VSIX through the management page.
++
++See the [official publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).
++It states that global Azure DevOps PATs retire on December 1, 2026; do not establish
++a new long-lived PAT-based automation pipeline. No credentials belong in this repo
++or npm package.
++
++## Explicit publication
++
++Only after release approval, publish the tested VSIX without rebuilding it:
++
++```sh
++npm run publish:vscode -- --azure-credential
++```
++
++This delegates to `vsce publish --packagePath .artifacts/whymark-vscode.vsix` and
++requires configured publisher access. Alternatively upload that VSIX in publisher
++management. This repository does not provision publisher accounts or identities.
++
++Publish the npm package separately with `npm publish` after reviewing its packed
++contents; its prepack lifecycle rebuilds the bundled extension. Neither publication
++runs as part of normal builds, tests, packing, or installation. No release was made
++while implementing these commands.
++
++After Marketplace publication users can install from the editor UI, run
++`code --install-extension spink-dev.whymark`, or use
++`npx whymark vscode install --marketplace`. Marketplace and npm have independent
++release timing; bundled installation always uses the artifact shipped with npm.
+
+@note file kind=intent
+why: Distinguish the working npm installation path from a Marketplace listing
+  that still needs publisher access and publication. Document authentication
+  and release boundaries without claiming an unpublished extension is
+  available.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file extensions/vscode/scripts/package.mjs added +14 newsha=4bac9e5
+@@ -0,0 +1,14 @@
++import { createVSIX } from '@vscode/vsce';
++import { createHash } from 'node:crypto';
++import { copyFile, readFile, writeFile, mkdir } from 'node:fs/promises';
++import { dirname, resolve } from 'node:path';
++import { fileURLToPath } from 'node:url';
++const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
++await mkdir(resolve(root, '.artifacts'), { recursive: true });
++await mkdir(resolve(root, 'dist'), { recursive: true });
++const target = resolve(root, '.artifacts/whymark-vscode.vsix');
++await createVSIX({ cwd: resolve(root, 'extensions/vscode'), packagePath: target, dependencies: false });
++await copyFile(target, resolve(root, 'dist/whymark-vscode.vsix'));
++const manifest = JSON.parse(await readFile(resolve(root, 'extensions/vscode/package.json'), 'utf8'));
++const sha256 = createHash('sha256').update(await readFile(target)).digest('hex');
++await writeFile(resolve(root, 'dist/vscode-extension.json'), JSON.stringify({ id: `${manifest.publisher}.${manifest.name}`, version: manifest.version, sha256 }, null, 2) + '\n');
+
+@note file kind=intent
+why: Build and allowlist the extension artifact during npm packing so the
+  package works outside this checkout. Keep generated bytes out of source
+  control and make publishing an explicit operation on the reviewed VSIX.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file src/lib/vscode/install.ts added +58 newsha=7ea934e
+@@ -0,0 +1,58 @@
++import { spawnSync } from "node:child_process";
++import { accessSync, constants, existsSync, readFileSync } from "node:fs";
++import { createHash } from "node:crypto";
++import { delimiter, dirname, isAbsolute, join, resolve } from "node:path";
++import { homedir } from "node:os";
++
++export interface InstallExtensionOptions {
++  packageRoot: string;
++  code?: string;
++  dryRun?: boolean;
++  marketplace?: boolean;
++  extensionsDir?: string;
++  userDataDir?: string;
++}
++
++function executable(candidate: string): boolean {
++  try { accessSync(candidate, process.platform === "win32" ? constants.F_OK : constants.X_OK); return true; } catch { return false; }
++}
++
++export function codeLauncher(explicit?: string): { command: string; args: string[]; env: NodeJS.ProcessEnv } {
++  const names = explicit ? [explicit] : process.platform === "win32" ? ["code.cmd", "code.exe"] : ["code"];
++  const candidates = names.flatMap(name => isAbsolute(name) || /[\\/]/.test(name) ? [resolve(name)] : (process.env.PATH ?? "").split(delimiter).filter(Boolean).map(dir => join(dir, name)));
++  if (!explicit && process.platform === "darwin") candidates.push("/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code", join(homedir(), "Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"));
++  if (!explicit && process.platform === "win32") for (const root of [process.env.LOCALAPPDATA && join(process.env.LOCALAPPDATA, "Programs"), process.env.ProgramFiles]) if (root) candidates.push(join(root, "Microsoft VS Code", "Code.exe"));
++  const command = candidates.find(executable);
++  if (!command) throw new Error("VS Code CLI not found. Install VS Code and add 'code' to PATH, or pass --code <path-to-code>.");
++  // Windows batch launchers need a shell. Invoke their native CLI directly instead,
++  // preserving paths as arguments rather than interpolating them into cmd.exe.
++  if (process.platform === "win32") {
++    const root = /\.(cmd|bat)$/i.test(command) ? resolve(dirname(command), "..") : dirname(command);
++    const native = join(root, "Code.exe");
++    const cli = join(root, "resources/app/out/cli.js");
++    if (!existsSync(native) || !existsSync(cli)) throw new Error("Use --code with the standard VS Code Code.exe or bin/code.cmd installation path.");
++    return { command: native, args: [cli], env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" } };
++  }
++  return { command, args: [], env: process.env };
++}
++
++export function installExtension(options: InstallExtensionOptions): void {
++  const metadataPath = join(options.packageRoot, "dist/vscode-extension.json");
++  if (!existsSync(metadataPath)) throw new Error("Extension bundle missing. In a source checkout run npm run package:vscode; otherwise reinstall the whymark npm package.");
++  const metadata = JSON.parse(readFileSync(metadataPath, "utf8"));
++  if (!/^[a-z0-9-]+\.[a-z0-9-]+$/i.test(metadata.id) || !/^[a-f0-9]{64}$/.test(metadata.sha256)) throw new Error("Invalid bundled extension metadata. Reinstall the whymark npm package.");
++  const vsix = join(options.packageRoot, "dist/whymark-vscode.vsix");
++  if (!options.marketplace && createHash("sha256").update(readFileSync(vsix)).digest("hex") !== metadata.sha256) throw new Error("Bundled VSIX checksum mismatch. Reinstall the whymark npm package.");
++  const launcher = codeLauncher(options.code);
++  const args = [...launcher.args, "--install-extension", options.marketplace ? metadata.id : vsix];
++  if (options.extensionsDir) args.push("--extensions-dir", resolve(options.extensionsDir));
++  if (options.userDataDir) args.push("--user-data-dir", resolve(options.userDataDir));
++  if (options.dryRun) {
++    process.stdout.write(`${JSON.stringify({ command: launcher.command, args, source: options.marketplace ? "marketplace" : "bundled", extension: metadata.id, bundledVersion: metadata.version }, null, 2)}\n`);
++    return;
++  }
++  const result = spawnSync(launcher.command, args, { stdio: "inherit", env: launcher.env, shell: false, timeout: 120000 });
++  if (result.error) throw new Error(`VS Code installation could not complete: ${result.error.message}`);
++  if (result.status !== 0) throw new Error(`VS Code installation failed (${result.signal ?? result.status}).${options.marketplace ? " The extension must be published before Marketplace installation works." : ""}`);
++  process.stdout.write(`Installed ${metadata.id}. Open the Command Palette and search for Whymark.\n`);
++}
+
+@note file kind=intent
+why: Users should not need the private Git repository to install the editor
+  integration. Resolve the shipped artifact from the npm package, verify its
+  digest, and invoke the editor using separate arguments so whitespace and
+  shell characters remain literal. Preview and explicit profile paths keep
+  installation controllable.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)
+
+@file tests/vscode-install.test.ts added +32 newsha=625f311
+@@ -0,0 +1,32 @@
++import { expect, it } from "vitest";
++import { createHash } from "node:crypto";
++import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
++import { join } from "node:path";
++import { tmpdir } from "node:os";
++import { installExtension } from "../src/lib/vscode/install";
++
++it.skipIf(process.platform === "win32")("installs exact packaged bytes using safe arguments and propagates failures", () => {
++  const root = mkdtempSync(join(tmpdir(), "whymark installer "));
++  try {
++    mkdirSync(join(root, "dist"));
++    const payload = Buffer.from("fixture VSIX");
++    writeFileSync(join(root, "dist/whymark-vscode.vsix"), payload);
++    writeFileSync(join(root, "dist/vscode-extension.json"), JSON.stringify({ id: "spink-dev.whymark", version: "0.1.0", sha256: createHash("sha256").update(payload).digest("hex") }));
++    const code = join(root, "code launcher");
++    const log = join(root, "arguments.json");
++    writeFileSync(code, `#!/usr/bin/env node\nrequire('node:fs').writeFileSync(${JSON.stringify(log)},JSON.stringify(process.argv.slice(2)));\n`, { mode: 0o755 });
++    const destination = join(root, "extensions ; literal");
++    installExtension({ packageRoot: root, code, extensionsDir: destination });
++    expect(JSON.parse(readFileSync(log, "utf8"))).toEqual(["--install-extension", join(root, "dist/whymark-vscode.vsix"), "--extensions-dir", destination]);
++    installExtension({ packageRoot: root, code, marketplace: true });
++    expect(JSON.parse(readFileSync(log, "utf8"))).toEqual(["--install-extension", "spink-dev.whymark"]);
++    writeFileSync(log, "unchanged");
++    installExtension({ packageRoot: root, code, dryRun: true });
++    expect(readFileSync(log, "utf8")).toBe("unchanged");
++    expect(() => installExtension({ packageRoot: root, code: join(root, "missing") })).toThrow("CLI not found");
++    writeFileSync(code, "#!/usr/bin/env node\nprocess.exit(7);\n", { mode: 0o755 });
++    expect(() => installExtension({ packageRoot: root, code })).toThrow("failed (7)");
++    writeFileSync(join(root, "dist/whymark-vscode.vsix"), "corrupt");
++    expect(() => installExtension({ packageRoot: root, code })).toThrow("checksum mismatch");
++  } finally { rmSync(root, { recursive: true, force: true }); }
++});
+
+@note file kind=test
+why: Verify the actual packed contents and installer boundary: missing
+  launchers, failed processes, corrupted VSIX bytes, argument handling and
+  previews must not silently look like successful installation.
+source: file:specs/002-vscode-extension/PLAN.md
+verify: cmd `npm test` => pass (exit 0 in 5.9s)

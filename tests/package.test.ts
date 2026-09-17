@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, realpathSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, it } from "vitest";
@@ -14,12 +14,17 @@ it("installs the packed skill with only npm tarballs and no Git access", () => {
   try {
     const packed = JSON.parse(run("npm", ["pack", "--ignore-scripts", "--json", "--pack-destination", temp]))[0];
     expect(packed.files.map((f: { path: string }) => f.path)).toContain(".agents/skills/whymark/SKILL.md");
+    expect(packed.files.map((f: { path: string }) => f.path)).toContain("dist/whymark-vscode.vsix");
+    expect(packed.files.map((f: { path: string }) => f.path)).toContain("dist/vscode-extension.json");
     const yaml = JSON.parse(run("npm", ["pack", "./node_modules/yaml", "--ignore-scripts", "--json", "--pack-destination", temp]))[0];
     const consumer = join(temp, "consumer"); mkdirSync(consumer);
     writeFileSync(join(consumer, "package.json"), '{"private":true}');
     run("npm", ["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", join(temp, packed.filename), join(temp, yaml.filename)], consumer);
     const cli = join(consumer, "node_modules/whymark/bin/whymark.mjs");
     run(process.execPath, [cli, "skill", "install", "--agent", "codex", "--agent", "claude-code"], consumer);
+    const preview = JSON.parse(run(process.execPath, [cli, "vscode", "install", "--dry-run", "--code", process.execPath], consumer));
+    expect(preview.source).toBe("bundled");
+    expect(preview.args[1]).toBe(realpathSync(join(consumer, "node_modules/whymark/dist/whymark-vscode.vsix")));
     const skill = join(consumer, ".agents/skills/whymark");
     expect(existsSync(join(skill, "references/whymark-v1.md"))).toBe(true);
     expect(readFileSync(join(skill, "SKILL.md"), "utf8")).toContain("references/whymark-v1.md");

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -20,7 +19,7 @@ import type { Diagnostic, Note, NoteKind } from "@/lib/whymark/types";
 import type { ReviewVM } from "@/lib/view-model";
 import { FilePanel, type ViewMode } from "./file-panel";
 import { ApplyControls, ApplyResult } from "./decide";
-import { applyFileDecisions, saveEditedRange } from "@/app/r/[slug]/actions";
+import type { ReviewActions } from "@/lib/review-actions";
 import { isEmpty, summarize, type FileDecisions } from "@/lib/whymark/edit";
 import { KIND_META, STATUS_COLOR } from "./meta";
 import { CoverageBar, Ring, Stat } from "./meters";
@@ -35,7 +34,12 @@ import { useReviewPreferences } from "./use-review-preferences";
 import { type ReviewPreferences } from "@/lib/review-preferences";
 import { hasPassingVerify } from "@/lib/whymark/stats";
 
-interface ReviewViewProps {
+export interface ReviewViewProps {
+  mutationTarget?: string;
+  homeControl?: React.ReactNode;
+  actions?: ReviewActions;
+  sourceLabel?: string;
+  onViewSource?: () => void;
   review: ReviewVM;
   /** Absent when the document was pasted rather than read from `reviews/`. */
   slug?: string;
@@ -44,7 +48,7 @@ interface ReviewViewProps {
   onBack?: () => void;
 }
 
-export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
+export function ReviewView({ review, slug, issues, onBack, homeControl, mutationTarget = "Working tree", actions, sourceLabel, onViewSource }: ReviewViewProps) {
   const compact = !useMediaQuery("(min-width: 1180px)", true);
   const [preferences, setPreferences] = useReviewPreferences();
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
@@ -137,7 +141,7 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
    * act on. Each file's own hash is re-checked server-side before it is written.
    */
   const apply = useCallback(async () => {
-    if (!slug) return;
+    if (!slug || !actions) return;
     setApplying(true);
     const failures: string[] = [];
     let discarded = 0;
@@ -145,7 +149,7 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
     let parts = 0;
 
     for (const [path, fileDecisions] of Object.entries(decisions)) {
-      const result = await applyFileDecisions(slug, path, fileDecisions);
+      const result = await actions.applyFileDecisions(slug, path, fileDecisions);
       if (result.ok) {
         discarded += result.discarded ?? 0;
         restored += result.restored ?? 0;
@@ -172,9 +176,9 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
       .join(", ");
     setApplyResult({
       ok: true,
-      message: `Working tree updated: ${undone}. This review now describes code you changed — regenerate it with \`whymark new --worktree\` before sharing.`,
+      message: `${mutationTarget} updated: ${undone}. This review now describes code you changed — regenerate it with \`whymark new --worktree\` before sharing.`,
     });
-  }, [decisions, slug]);
+  }, [decisions, slug, actions, mutationTarget]);
 
   /**
    * Deciding by keyboard, for a reviewer stepping through with j/k: `x` rejects
@@ -182,7 +186,7 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
    * just formed an opinion about.
    */
   const toggleActiveNote = useCallback(() => {
-    if (!slug || !activeNoteId) return;
+    if (!slug || !actions || !activeNoteId) return;
     const file = review.files.find((candidate) =>
       candidate.notes.some((note) => note.id === activeNoteId),
     );
@@ -218,21 +222,21 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
             ),
           },
     );
-  }, [activeNoteId, decisions, review.files, setFileDecisions, slug]);
+  }, [activeNoteId, decisions, review.files, setFileDecisions, slug, actions]);
 
   const onSaveEdit = useCallback(
     async (path: string, start: number, end: number, text: string) => {
-      if (!slug) return { ok: false, error: "A pasted review has no file to write to." };
-      const result = await saveEditedRange(slug, path, start, end, text);
+      if (!slug || !actions) return { ok: false, error: "A pasted review has no file to write to." };
+      const result = await actions.saveEditedRange(slug, path, start, end, text);
       if (result.ok) {
         setApplyResult({
           ok: true,
-          message: `Saved your edit to ${path}. Regenerate the review so its diff matches the file again.`,
+          message: `${mutationTarget} updated for ${path}. Regenerate the review so its diff matches the file again.`,
         });
       }
       return result;
     },
-    [slug],
+    [slug, actions, mutationTarget],
   );
 
   useEffect(() => {
@@ -298,15 +302,7 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
           >
             <ArrowLeft className="size-4" />
           </button>
-        ) : (
-          <Link
-            href="/"
-            className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-            aria-label="Home"
-          >
-            <ArrowLeft className="size-4" />
-          </Link>
-        )}
+        ) : homeControl}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[13.5px] font-medium leading-tight">{meta.title}</h1>
           <p className="truncate font-mono text-[11px] text-muted-foreground">
@@ -328,6 +324,7 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
         </div>
 
         <ApplyControls
+          target={mutationTarget}
           summary={summarize(decisions)}
           busy={applying}
           onApply={apply}
@@ -645,7 +642,7 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
               visibleNoteIds={visibleNoteIds}
               activeNoteId={activeNoteId}
               onActivate={activate}
-              editable={Boolean(slug)}
+              editable={Boolean(slug && actions)}
               decisions={decisions[file.path]}
               onDecisions={setFileDecisions}
               onSaveEdit={onSaveEdit}
@@ -654,7 +651,9 @@ export function ReviewView({ review, slug, issues, onBack }: ReviewViewProps) {
         </div>
 
         <footer className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/60 pt-4 text-[11.5px] text-muted-foreground">
-          {slug ? (
+          {onViewSource ? (
+            <><span>{sourceLabel}</span><button onClick={onViewSource} className="underline">Open review source</button></>
+          ) : slug ? (
             <>
               <span className="font-mono">reviews/{slug}.whymark</span>
               <a

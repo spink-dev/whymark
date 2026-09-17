@@ -1,0 +1,17 @@
+import { build } from 'esbuild';
+import postcss from 'postcss';
+import tailwind from '@tailwindcss/postcss';
+import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { resolve, dirname } from 'node:path';
+const extension = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const root = resolve(extension, '../..');
+await mkdir(resolve(root, '.artifacts'), { recursive: true });
+await mkdir(resolve(extension, 'dist'), { recursive: true });
+const common = { absWorkingDir: root, bundle: true, logLevel: 'info', legalComments: 'eof', minify: true };
+await build({ ...common, entryPoints: ['extensions/vscode/src/extension.ts', 'extensions/vscode/src/worker.ts'], outdir: resolve(extension, 'dist'), outExtension: { '.js': '.cjs' }, platform: 'node', target: 'node20', format: 'cjs', external: ['vscode'] });
+await build({ ...common, entryPoints: ['extensions/vscode/src/webview.tsx'], outfile: resolve(extension, 'dist/webview.js'), platform: 'browser', target: 'chrome120', format: 'iife', define: { 'process.env.NODE_ENV': '"production"' } });
+const cssPath = resolve(root, 'src/app/globals.css');
+const result = await postcss([tailwind({ base: root })]).process(await readFile(cssPath, 'utf8'), { from: cssPath });
+await writeFile(resolve(extension, 'dist/webview.css'), result.css + '\n' + await readFile(resolve(extension, 'src/theme.css'), 'utf8'));
+await copyFile(resolve(root, 'LICENSE'), resolve(extension, 'LICENSE'));
